@@ -49,7 +49,9 @@ export function horizonFor(site) {
     const stepMin = st.dem.scale / 1000;
     for (let k = 0; k < 720; k++) {
       const th = k * 0.5 * D2R, sth = Math.sin(th), cth = Math.cos(th);
-      let best = -Math.acos(Math.min(1, (RM + h0 / 1000) / ro)) * R2D;
+      // Start below anything possible: on a peak the terrain falls away and the
+      // true horizon can sit several degrees below level.
+      let best = -90;
       // Steps grow with distance (1.5%), never smaller than one DEM pixel.
       for (let d = stepMin; d < 150; d += Math.max(stepMin, d * 0.015)) {
         const del = d / RM, sd = Math.sin(del), cd = Math.cos(del);
@@ -62,7 +64,8 @@ export function horizonFor(site) {
         const el = Math.atan2(r * cd - ro, r * sd) * R2D;
         if (el > best) best = el;
       }
-      hz[k] = best;
+      // Ray left the DEM immediately (site at its edge): fall back to a smooth sphere.
+      hz[k] = best > -90 ? best : -Math.acos(Math.min(1, (RM + h0 / 1000) / ro)) * R2D;
     }
   } else {
     hz.fill(-Math.acos(RM / (RM + st.mast / 1000)) * R2D);

@@ -1,6 +1,7 @@
 node_modules/
 *.IMG
 *.img
+!data/LDEM_75S_240M.IMG
 *.LBL
 .DS_Store
 *.zip

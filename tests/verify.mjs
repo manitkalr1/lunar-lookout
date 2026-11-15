@@ -82,6 +82,22 @@ const latlon = v => { const n = Math.hypot(...v); return [Math.asin(v[2] / n) * 
   st.dem = null;
 }
 
+// 5b. Regression: on top of a 2 km peak the horizon must dip below level
+//     (terrain falls away at the 3.8° slope).
+{
+  const scale = 240, n = 1001, data = new Int16Array(n * n), off = n / 2 - 0.5;
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+    const X = (c - off) * scale / 1000, Y = (off - r) * scale / 1000, d = Math.hypot(X, Y);
+    data[r * n + c] = Math.round(4000 * Math.max(0, 1 - d / 30));   // 2000 m cone, 30 km radius (slope 3.8°)
+  }
+  T.loadDEM(data.buffer, 'LDEM_75S_240M.IMG');
+  st.mast = 0;
+  const H = T.horizonFor({ lat: -89.999, lon: 0 });
+  const mx = Math.max(...H.hz);
+  check('Horizon from a peak dips below level', mx < -0.5, `highest horizon ${mx.toFixed(2)}°`);
+  st.dem = null;
+}
+
 // 6. Bad file names / sizes are rejected cleanly.
 {
   const r = T.loadDEM(new ArrayBuffer(10), 'random.img');

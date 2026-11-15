@@ -15,7 +15,7 @@
   <header>
     <h1>Lunar Lookout<small>South-pole landing site navigator: sunlight for power, Earth in view for communication</small></h1>
     <div class="btnrow">
-      <span class="chip" id="terrainChip"><span class="dot off"></span><span>Terrain: smooth Moon</span></span>
+      <span class="chip" id="terrainChip"><span class="dot off"></span><span>Terrain: loading…</span></span>
       <span class="chip"><span class="dot on"></span><span>Ephemeris: live (IAU Moon model)</span></span>
       <button id="explainBtn" aria-pressed="false">Explain mode: off</button>
     </div>
@@ -117,11 +117,8 @@
     <section class="panel" aria-label="Load terrain">
       <div class="panel-head"><h2>Real terrain: LOLA elevation data</h2></div>
       <div class="drop" id="drop">
-        <div id="demStatus">No terrain loaded. Results use a smooth sphere, so crater rims and shadows are not modeled yet.</div>
-        <ol>
-          <li>Download <span class="mono">LDEM_75S_240M.IMG</span> (29 MB) from the <a href="https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/" target="_blank" rel="noopener">LOLA polar GDR archive</a>. For more detail near the pole, use <span class="mono">LDEM_85S_40M.IMG</span> (115 MB).</li>
-          <li>Drop the file here or choose it below. It stays in your browser.</li>
-        </ol>
+        <div id="demStatus">Loading NASA LOLA terrain…</div>
+        <p style="margin:0">The app loads NASA's LOLA 240 m south-pole elevation model automatically. For sharper detail within 5° of the pole, download <span class="mono">LDEM_85S_40M.IMG</span> (115 MB) from the <a href="https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/" target="_blank" rel="noopener">LOLA polar GDR archive</a> and drop it here. It stays in your browser.</p>
         <input type="file" id="demFile" accept=".img,.IMG">
       </div>
       <p class="explain" style="margin-top:10px">LOLA is the laser altimeter on NASA's Lunar Reconnaissance Orbiter. It measured the height of the lunar surface billions of times. From those heights we trace a line in every direction to find how high the terrain rises, which gives each site its true horizon.</p>

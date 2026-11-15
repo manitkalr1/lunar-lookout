@@ -27,12 +27,26 @@ Then open http://localhost:8000.
 
 To deploy, push to GitHub, then go to **Settings → Pages**, choose the `main` branch and the `/ (root)` folder, and click **Save**.
 
-## Load real terrain (do this before demoing)
+## Real NASA terrain (built in)
 
-1. Download [`LDEM_75S_240M.IMG`](https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_75S_240M.IMG) (29 MB) from the LOLA polar GDR archive. For more detail near the pole, use `LDEM_85S_40M.IMG` (115 MB).
-2. Drop it on the **Real terrain** panel. The status should say the Shackleton floor is about 4 km below its rim ✓, and the header chip should turn green.
+The app ships with NASA's **LRO LOLA** south-pole elevation model `data/LDEM_75S_240M.IMG` (240 m/pixel, 3812×3812, 29 MB) and loads it on startup. The status panel confirms it with a built-in check: *Shackleton floor sits 4.0 km below its rim ✓*.
 
-The file stays in your browser (IndexedDB). It isn't uploaded anywhere, and it's too large to commit to the repo.
+For sharper detail within 5° of the pole, drop `LDEM_85S_40M.IMG` (115 MB, from the [LOLA polar GDR archive](https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/)) onto the terrain panel. Your browser remembers it for next time.
+
+### Results on real terrain vs published science
+
+These are one-year results from 1 Jan 2026, with a 2 m mast. Run `npm run test:real` to reproduce them.
+
+| Site | Sunlight | Earth in view | Longest night | Published reference |
+|---|---|---|---|---|
+| Connecting ridge | 83% | 51% | 6 days | ~80–90%, nights of days (Mazarico et al. 2011) |
+| de Gerlache rim | 54% | 51% | 15 days | |
+| Mons Mouton | 46% | 81% | 17 days | |
+| Malapert massif | 41% | 66% | 20 days | Malapert peak ~5 km high ✓ |
+| Shackleton floor | 0% | 0% | whole year | Permanently shadowed ✓ |
+| Haworth floor | 0% | 0% | whole year | Permanently shadowed ✓ |
+
+Shackleton depth from the DEM is 4.0 km (published value: ~4.2 km, Zuber et al. 2012).
 
 ## How it works
 
@@ -50,7 +64,8 @@ The file stays in your browser (IndexedDB). It isn't uploaded anywhere, and it's
 
 ```bash
 npm install
-npm test
+npm test            # geometry checks against independent models
+npm run test:real   # results on the real LOLA terrain vs published facts
 ```
 
 The tests check:
@@ -62,14 +77,14 @@ The tests check:
 
 ## Data sources
 
-- **LRO LOLA** polar elevation models (NASA PDS Geosciences Node / MIT imbrium mirror)
+- **LRO LOLA** `LDEM_75S_240M` polar elevation model (NASA PDS Geosciences Node / MIT imbrium mirror), bundled in `data/`
 - **astronomy-engine** 2.1.19 (MIT licence), bundled in `vendor/`
 - Landing-site coordinates are approximate. Verify them in [LROC Quickmap](https://quickmap.lroc.asu.edu/) before quoting.
 - **JPL Horizons** can be used to spot-check Sun and Earth positions for any site and time.
 
 ## Limitations
 
-- Without a DEM loaded, the Moon is treated as a smooth sphere, so crater shadows don't appear.
+- North of 75°S there is no terrain in the bundled file, so those sites (Apollo, Chang'e) use a smooth Moon.
 - The 240 m DEM smooths out features smaller than a few pixels. The 40 m file is better for sites within 5° of the pole.
 - Earth visibility uses the centre of Earth's disk, and sunlight ignores reflected light from nearby terrain.
 

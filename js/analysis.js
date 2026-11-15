@@ -45,7 +45,7 @@ export function verdictOf(m) {
   if (m.sun < 30) { why.push(`Only ${m.sun.toFixed(0)}% sunlight`); lvl = 'caution'; }
   if (m.earth < 40) { why.push(`Earth in view only ${m.earth.toFixed(0)}% of the time`); lvl = lvl === 'caution' ? 'nogo' : 'caution'; }
   if (m.longestDark > 3 * st.battery || m.sun < 10 || m.earth === 0) lvl = 'nogo';
-  if (!why.length) why.push(`Night never longer than ${fmtH(m.longestDark)}`, `Earth in view ${m.earth.toFixed(0)}% of the time`);
+  if (!why.length) why.push(m.longestDark === 0 ? 'Sunlit for the whole mission' : `Night never longer than ${fmtH(m.longestDark)}`, `Earth in view ${m.earth.toFixed(0)}% of the time`);
   return { lvl, why, label: lvl === 'go' ? 'GO' : lvl === 'caution' ? 'CAUTION' : 'NO-GO' };
 }
 

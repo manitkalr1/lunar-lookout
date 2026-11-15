@@ -99,12 +99,29 @@ function init() {
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', renderAll);
 
   renderAll();
-  restoreDEM().then(v => {
-    if (!v) return;
-    const r = loadDEM(v.buf, v.name);
+  loadInitialTerrain();
+}
+
+// Terrain on startup: a file the user dropped earlier (e.g. the 40 m DEM) wins,
+// otherwise the bundled NASA LOLA 240 m south-pole DEM in data/.
+const BUNDLED = 'data/LDEM_75S_240M.IMG';
+async function loadInitialTerrain() {
+  const saved = await restoreDEM();
+  if (saved) {
+    const r = loadDEM(saved.buf, saved.name);
+    setDemStatus(r.message, r.ok);
+    if (r.ok) return renderAll();
+  }
+  try {
+    setDemStatus('Loading NASA LOLA terrain (29 MB)…', false);
+    const res = await fetch(BUNDLED);
+    if (!res.ok) throw new Error(res.status);
+    const r = loadDEM(await res.arrayBuffer(), 'LDEM_75S_240M.IMG');
     setDemStatus(r.message, r.ok);
     if (r.ok) renderAll();
-  });
+  } catch (e) {
+    setDemStatus(`Could not load ${BUNDLED}. Drop the LOLA file here instead. Until then, results use a smooth Moon.`, false);
+  }
 }
 
 if (globalThis.Astronomy) init();

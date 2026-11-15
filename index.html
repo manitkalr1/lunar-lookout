@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lunar Lookout</title>
+<meta name="description" content="Pick a lunar landing site and date to see where the Sun and Earth sit above the local horizon: sunlight for power, Earth in view for communication.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Lunar Lookout<small>South-pole landing site navigator: sunlight for power, Earth in view for communication</small></h1>
+    <div class="btnrow">
+      <span class="chip" id="terrainChip"><span class="dot off"></span><span>Terrain: smooth Moon</span></span>
+      <span class="chip"><span class="dot on"></span><span>Ephemeris: live (IAU Moon model)</span></span>
+      <button id="explainBtn" aria-pressed="false">Explain mode: off</button>
+    </div>
+  </header>
+
+  <section class="panel" aria-label="Scenario">
+    <div class="controls">
+      <label class="field" for="siteSel">Landing site
+        <select id="siteSel"></select></label>
+      <label class="field" for="latIn">Latitude (°)
+        <input id="latIn" type="number" step="0.01" min="-90" max="90"></label>
+      <label class="field" for="lonIn">Longitude (°E)
+        <input id="lonIn" type="number" step="0.01" min="-180" max="360"></label>
+      <label class="field" for="dateIn">Landing date &amp; time (UTC)
+        <input id="dateIn" type="datetime-local" step="3600"></label>
+      <label class="field" for="durSel">Mission length
+        <select id="durSel"><option value="14">14 days</option><option value="30" selected>30 days</option><option value="60">60 days</option><option value="90">90 days</option></select></label>
+      <label class="field" for="mastIn">Panel / antenna height (m)
+        <input id="mastIn" type="number" min="0" max="50" step="1" value="2"></label>
+      <label class="field" for="battIn">Battery survives darkness (h)
+        <input id="battIn" type="number" min="1" max="1000" step="1" value="72"></label>
+      <button id="addCmp">Add to comparison</button>
+    </div>
+    <p class="explain" style="margin:10px 0 0">Pick a site and a landing time. Everything below recalculates from real orbital mechanics: where the Sun and Earth are in the lunar sky, and whether hills block them. "Battery survives darkness" is how long your lander can last without sunlight; it drives the go / no-go call.</p>
+  </section>
+
+  <div class="grid-main">
+    <section class="panel" aria-label="Horizon view">
+      <div class="panel-head">
+        <h2 id="horizonTitle">Sky above the site</h2>
+        <span class="sub">Azimuth vs elevation. Vertical scale exaggerated.</span>
+      </div>
+      <canvas id="horizonCv" height="300" aria-label="Horizon chart with Sun and Earth paths"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--terrain-fill);border:1px solid var(--terrain)"></i>Local horizon (terrain)</span>
+        <span><i style="background:var(--sun)"></i>Sun path over mission</span>
+        <span><i style="background:var(--earth)"></i>Earth path over mission</span>
+      </div>
+      <div class="timebar">
+        <button id="playBtn" class="primary" aria-pressed="false">Play</button>
+        <input id="tSlider" type="range" min="0" max="1000" value="0" aria-label="Time within mission">
+        <span class="mono" id="tLabel"></span>
+      </div>
+      <p class="explain">At the south pole the Sun never climbs more than about 1.5° because the Moon's axis is tilted only 1.5°. It circles the whole horizon once a month, so a hill in any direction can cast a long shadow. Earth wobbles up and down by about 7° (libration) in roughly the direction of the lunar near side.</p>
+    </section>
+
+    <section class="panel" aria-label="Verdict and key numbers">
+      <div class="panel-head"><h2>Mission readiness</h2><span class="sub" id="windowLbl"></span></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="stats" id="stats"></div>
+      <p class="explain" style="margin-top:10px">Sunlight % counts how much of the Sun's disk clears the local horizon (it is about 0.5° wide, so partial sunrise matters). Earth in view means the center of Earth is above the terrain, so a direct antenna link is possible without a relay satellite.</p>
+    </section>
+  </div>
+
+  <section class="panel" aria-label="Timeline">
+    <div class="panel-head"><h2>Sunlight and Earth contact, hour by hour</h2><span class="sub">Click a strip to jump to that moment</span></div>
+    <canvas id="stripCv" height="120"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--sun)"></i>Sunlit (brighter = more of the disk visible)</span>
+      <span><i style="background:var(--earth)"></i>Earth above horizon</span>
+      <span><i style="background:var(--shadow)"></i>Dark / no Earth</span>
+    </div>
+  </section>
+
+  <div class="grid-main">
+    <section class="panel" aria-label="Site comparison">
+      <div class="panel-head"><h2>Compare sites, same landing time</h2><span class="sub">Up to 5 sites</span></div>
+      <div class="tablewrap"><table id="cmpTable"></table></div>
+      <canvas id="cmpCv" height="160" style="margin-top:10px"></canvas>
+      <p class="explain">Sites a few kilometers apart can differ by days of darkness. Ridges and crater rims see the Sun more often; crater floors near the pole can stay dark for billions of years, which is why water ice survives there.</p>
+    </section>
+
+    <section class="panel" aria-label="Schedule slip">
+      <div class="panel-head"><h2>What if the launch slips?</h2><span class="sub" id="slipSite"></span></div>
+      <div class="tablewrap"><table id="slipTable" class="slip"></table></div>
+      <div class="btnrow" style="margin-top:10px">
+        <button id="bestBtn">Find best landing day in next 60 days</button>
+      </div>
+      <div id="bestOut" class="sub" style="margin-top:8px"></div>
+      <canvas id="bestCv" height="110" style="margin-top:6px"></canvas>
+      <p class="explain">Hardware delays move landing dates. Because the Sun and Earth both follow monthly cycles, a one-week slip can turn a sunny landing into one that starts in a long night.</p>
+    </section>
+  </div>
+
+  <div class="grid-main">
+    <section class="panel" aria-label="Terrain illumination map">
+      <div class="panel-head"><h2>South pole lighting map</h2>
+        <label class="field" for="mapRad" style="grid-auto-flow:column;align-items:center">View radius
+          <select id="mapRad"><option value="30">30 km</option><option value="80">80 km</option><option value="170" selected>170 km</option></select></label>
+      </div>
+      <div class="map-wrap"><canvas id="mapCv" width="480" height="480" aria-label="Lighting map with cast shadows"></canvas></div>
+      <div class="legend">
+        <span><i style="background:var(--sun-soft);border:1px solid var(--sun)"></i>Sunlit now</span>
+        <span><i style="background:var(--shadow)"></i>In shadow now</span>
+        <span>Click the map to pick a custom site</span>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Load terrain">
+      <div class="panel-head"><h2>Real terrain: LOLA elevation data</h2></div>
+      <div class="drop" id="drop">
+        <div id="demStatus">No terrain loaded. Results use a smooth sphere, so crater rims and shadows are not modeled yet.</div>
+        <ol>
+          <li>Download <span class="mono">LDEM_75S_240M.IMG</span> (29 MB) from the <a href="https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/" target="_blank" rel="noopener">LOLA polar GDR archive</a>. For more detail near the pole, use <span class="mono">LDEM_85S_40M.IMG</span> (115 MB).</li>
+          <li>Drop the file here or choose it below. It stays in your browser.</li>
+        </ol>
+        <input type="file" id="demFile" accept=".img,.IMG">
+      </div>
+      <p class="explain" style="margin-top:10px">LOLA is the laser altimeter on NASA's Lunar Reconnaissance Orbiter. It measured the height of the lunar surface billions of times. From those heights we trace a line in every direction to find how high the terrain rises, which gives each site its true horizon.</p>
+    </section>
+  </div>
+
+  <footer>
+    Method: Sun and Moon positions from astronomy-engine (VSOP87 / ELP-based, ~1 arcminute), rotated into the Moon's body-fixed frame with the IAU/WGCCRE lunar orientation model (aligned with LOLA's Mean-Earth frame to well under 0.1°). Terrain horizons are ray-traced every 0.5° of azimuth out to 150 km on the LOLA polar stereographic DEM, including lunar curvature. Sunlight uses the fraction of the solar disk above the horizon. Landing-site coordinates are approximate; verify in <a href="https://quickmap.lroc.asu.edu/" target="_blank" rel="noopener">LROC Quickmap</a>. Built for NASA Space Apps 2026, challenge: Lunar Landing Site Navigator.
+  </footer>
+</div>
+<div class="tip" id="tip"></div>
+
+<script src="vendor/astronomy.browser.min.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

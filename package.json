@@ -1,0 +1,17 @@
+{
+  "name": "lunar-lookout",
+  "version": "1.0.0",
+  "description": "Lunar landing site navigator: Sun and Earth above the local horizon for any lunar site and date. NASA Space Apps 2026.",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "test": "node tests/verify.mjs"
+  },
+  "devDependencies": {
+    "astronomy-engine": "^2.1.19"
+  },
+  "private": true,
+  "type": "module"
+}

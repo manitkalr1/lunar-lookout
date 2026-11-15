@@ -1,0 +1,111 @@
+// App entry: builds the controls and wires events.
+import { HOUR, st } from './state.js';
+import { SITES, CUSTOM, siteById } from './sites.js';
+import { loadDEM, cacheDEM, restoreDEM, clearHorizonCache, mapToLL } from './terrain.js';
+import { renderAll, renderNow, renderCompare, renderMap, findBest } from './render.js';
+
+const $ = id => document.getElementById(id);
+
+function setDemStatus(text, ok) {
+  $('demStatus').textContent = text;
+  $('terrainChip').innerHTML = `<span class="dot ${ok ? 'on' : 'off'}"></span><span>Terrain: ${ok ? 'LOLA ' + st.dem.scale + ' m' : 'smooth Moon'}</span>`;
+}
+
+async function handleFile(file) {
+  if (!file) return;
+  setDemStatus(`Reading ${file.name}…`, false);
+  const buf = await file.arrayBuffer();
+  const r = loadDEM(buf, file.name);
+  setDemStatus(r.message, r.ok);
+  if (r.ok) { renderAll(); cacheDEM(buf, file.name); }
+}
+
+function init() {
+  st.site = SITES[0];
+
+  const sel = $('siteSel');
+  const groups = {};
+  [...SITES, CUSTOM].forEach(s => { (groups[s.g] ||= []).push(s); });
+  sel.innerHTML = Object.entries(groups)
+    .map(([g, ss]) => `<optgroup label="${g}">${ss.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</optgroup>`).join('');
+  sel.onchange = () => { st.site = siteById(sel.value); st.frac = 0; renderAll(); };
+
+  const setCustom = () => {
+    const la = +$('latIn').value, lo = +$('lonIn').value;
+    if (isNaN(la) || isNaN(lo) || la < -90 || la > 90) return;
+    CUSTOM.lat = Math.max(-89.99, la); CUSTOM.lon = lo > 180 ? lo - 360 : lo;
+    st.site = CUSTOM; renderAll();
+  };
+  $('latIn').onchange = setCustom;
+  $('lonIn').onchange = setCustom;
+
+  $('dateIn').onchange = e => {
+    const v = e.target.value; if (!v) return;
+    const ms = Date.parse(v + ':00Z');
+    if (!isNaN(ms)) { st.t0 = Math.floor(ms / HOUR) * HOUR; st.frac = 0; renderAll(); }
+  };
+  $('durSel').onchange = e => { st.days = +e.target.value; renderAll(); };
+  $('mastIn').onchange = e => { st.mast = Math.max(0, Math.min(50, +e.target.value || 0)); clearHorizonCache(); renderAll(); };
+  $('battIn').onchange = e => { st.battery = Math.max(1, +e.target.value || 72); renderAll(); };
+
+  $('addCmp').onclick = () => {
+    if (st.site === CUSTOM) {
+      const id = 'c' + Date.now();
+      SITES.push({ id, g: 'Custom', name: `Custom ${CUSTOM.lat.toFixed(2)}°, ${CUSTOM.lon.toFixed(2)}°`, lat: CUSTOM.lat, lon: CUSTOM.lon });
+      st.compare.push(id);
+    } else if (!st.compare.includes(st.site.id)) st.compare.push(st.site.id);
+    if (st.compare.length > 5) st.compare.shift();
+    renderCompare();
+  };
+
+  $('tSlider').oninput = e => { st.frac = e.target.value / 1000; renderNow(); };
+  const play = $('playBtn');
+  const loop = () => {
+    if (!st.playing) return;
+    st.frac += 1 / (st.days * 12); if (st.frac > 1) st.frac = 0;
+    renderNow(); requestAnimationFrame(loop);
+  };
+  play.onclick = () => {
+    st.playing = !st.playing;
+    play.textContent = st.playing ? 'Pause' : 'Play';
+    play.setAttribute('aria-pressed', st.playing);
+    if (st.playing) loop();
+  };
+
+  $('bestBtn').onclick = findBest;
+  const eb = $('explainBtn');
+  eb.onclick = () => {
+    const on = document.body.classList.toggle('explain-on');
+    eb.textContent = 'Explain mode: ' + (on ? 'on' : 'off'); eb.setAttribute('aria-pressed', on);
+  };
+
+  $('mapRad').onchange = e => { st.mapRad = +e.target.value; renderMap(); };
+  $('mapCv').onclick = e => {
+    if (!st.dem) return;
+    const cv = e.currentTarget, r = cv.getBoundingClientRect(), W = cv.width, kpp = 2 * st.mapRad / W;
+    const X = ((e.clientX - r.left) / r.width * W - W / 2) * kpp, Y = (W / 2 - (e.clientY - r.top) / r.height * W) * kpp;
+    const [la, lo] = mapToLL(X, Y);
+    CUSTOM.lat = +la.toFixed(3); CUSTOM.lon = +lo.toFixed(3); st.site = CUSTOM; renderAll();
+  };
+
+  const drop = $('drop');
+  $('demFile').onchange = e => handleFile(e.target.files[0]);
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add('hot'); };
+  drop.ondragleave = () => drop.classList.remove('hot');
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove('hot'); handleFile(e.dataTransfer.files[0]); };
+
+  let rt;
+  window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(renderAll, 150); });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', renderAll);
+
+  renderAll();
+  restoreDEM().then(v => {
+    if (!v) return;
+    const r = loadDEM(v.buf, v.name);
+    setDemStatus(r.message, r.ok);
+    if (r.ok) renderAll();
+  });
+}
+
+if (globalThis.Astronomy) init();
+else document.querySelector('.wrap').insertAdjacentHTML('afterbegin', '<div class="panel">The ephemeris library did not load. Reload the page.</div>');

@@ -4,15 +4,21 @@
 
 Pick a lunar landing site and a date. Lunar Lookout shows where the **Sun** (power) and **Earth** (direct communication) sit relative to the site's real terrain horizon. It also tells you how long sunlight and Earth contact last over the mission.
 
+## Why it matters
+
+NASA's Artemis astronauts and many robotic landers are heading to the lunar south pole, where water ice survives in craters that never see the Sun. There the Sun never climbs more than about 2° above level and circles the horizon once a month. A single hill can throw a site into days of darkness, and mountains can hide Earth and cut off communication. A site that is perfect on one date can leave a lander dark and silent a week later. Lunar Lookout lets mission planners, students and the public see this for any site and date in seconds.
+
 ## Features
 
-- **Horizon view**: the 360° terrain outline with the Sun and Earth paths over the whole mission, plus a time slider and Play button
+- **Mission brief and 60-second guided tour**: walks a first-time visitor from the problem to the answer
+- **Horizon view**: the 360° real terrain horizon with the Sun and Earth paths over the whole mission, plus a time slider and Play button
 - **Mission readiness**: a GO / CAUTION / NO-GO call based on your lander's battery, % sunlight, % Earth in view, the longest night, and countdowns to the next sunset or Earthset
-- **Hour-by-hour timeline** of sunlight, Earth contact, and both together
-- **Site comparison**: up to 5 sites side by side for the same landing time
+- **Landing window finder**: a heatmap of every south-pole site × the next 60 landing days, where each square is a full mission simulation. Click a square to load it
 - **Launch-slip analysis**: what a +1 day, +1 week, +2 weeks or +1 month delay changes
-- **Best landing day finder**: scans the next 60 days
-- **Live south-pole lighting map**: cast shadows from LOLA terrain; click the map to pick any spot
+- **Site comparison**: up to 5 sites side by side
+- **Live south-pole lighting map**: cast shadows from LOLA terrain; click the map to test any spot
+- **"How we know it's right"**: checks the app's results against published science, computed live in the browser
+- **Share links and CSV export**: send a colleague the exact scenario, or export hourly Sun and Earth data for analysis
 - **Explain mode**: plain-language notes for students and the public
 
 ## Run it

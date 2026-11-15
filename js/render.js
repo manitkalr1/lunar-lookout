@@ -12,6 +12,10 @@ const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).
 const tCur = () => st.t0 + st.frac * st.days * DAY;
 
 let MAIN = null;
+export const getMain = () => MAIN;
+const afterRender = [];
+/** Register a callback to run after every full re-render. */
+export const onRenderAll = fn => afterRender.push(fn);
 
 // ---------- helpers ----------
 function prep(cv) {
@@ -33,6 +37,7 @@ export function renderAll() {
   MAIN = series(st.site, st.t0, st.days);
   MAIN.m = metrics(MAIN);
   renderHorizon(); renderReadiness(); renderStrip(); renderCompare(); renderSlip(); renderMap(); syncInputs();
+  afterRender.forEach(fn => fn());
 }
 export function renderNow() { renderHorizon(); renderReadiness(); renderStrip(); renderMapThrottled(); syncTime(); }
 

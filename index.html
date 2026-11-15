@@ -13,7 +13,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>Lunar Lookout<small>South-pole landing site navigator: sunlight for power, Earth in view for communication</small></h1>
+    <h1>Lunar Lookout<small>Will your lander have power and a line to Earth? Pick any lunar site and date and find out in seconds.</small></h1>
     <div class="btnrow">
       <span class="chip" id="terrainChip"><span class="dot off"></span><span>Terrain: loading…</span></span>
       <span class="chip"><span class="dot on"></span><span>Ephemeris: live (IAU Moon model)</span></span>
@@ -21,7 +21,28 @@
     </div>
   </header>
 
-  <section class="panel" aria-label="Scenario">
+  <section class="panel brief" id="brief" aria-label="Mission brief">
+    <div class="brief-text">
+      <h2>Why this matters</h2>
+      <p>NASA's Artemis astronauts and a wave of robotic landers are heading to the lunar south pole, where water ice hides in craters that never see the Sun. Down there the Sun never climbs more than about 2° above level. It circles the horizon once a month, so a single hill can throw a site into days of darkness, and mountains can hide Earth and cut off communication. A site that is perfect on one date can leave a lander dark and silent one week later.</p>
+      <p>Lunar Lookout puts NASA's own laser-altimeter terrain (LRO LOLA) and the real motion of the Sun and Earth into one tool. Mission planners, students and space fans can all see, hour by hour, whether a landing site gets <strong class="t-sun">sunlight for power</strong> and keeps <strong class="t-earth">Earth in view for radio contact</strong>.</p>
+      <div class="btnrow"><button id="tourBtn" class="primary">Take the 60-second tour</button></div>
+    </div>
+    <ul class="brief-facts">
+      <li><span class="big">~1.5°</span>Highest the Sun ever gets at the exact pole</li>
+      <li><span class="big">0%</span>Sunlight on Shackleton's floor, all year</li>
+      <li><span class="big">83%</span>Sunlight on a ridge 20 km away</li>
+    </ul>
+  </section>
+
+  <div class="tour" id="tour" role="dialog" aria-live="polite" aria-label="Guided tour" hidden>
+    <div class="tour-step mono" id="tourStep"></div>
+    <h3 id="tourTitle"></h3>
+    <p id="tourText"></p>
+    <div class="btnrow"><button id="tourBack">Back</button><button id="tourNext" class="primary">Next</button><button id="tourClose" class="x" aria-label="Close tour">✕ Close</button></div>
+  </div>
+
+  <section class="panel" id="scenario" aria-label="Scenario">
     <div class="controls">
       <label class="field" for="siteSel">Landing site
         <select id="siteSel"></select></label>
@@ -38,12 +59,15 @@
       <label class="field" for="battIn">Battery survives darkness (h)
         <input id="battIn" type="number" min="1" max="1000" step="1" value="72"></label>
       <button id="addCmp">Add to comparison</button>
+      <button id="shareBtn" title="Copy a link that opens this exact scenario">Copy share link</button>
+      <button id="csvBtn" title="Hourly Sun and Earth data for this mission, as a spreadsheet">Download CSV</button>
+      <span class="sub" id="shareOut" role="status"></span>
     </div>
     <p class="explain" style="margin:10px 0 0">Pick a site and a landing time. Everything below recalculates from real orbital mechanics: where the Sun and Earth are in the lunar sky, and whether hills block them. "Battery survives darkness" is how long your lander can last without sunlight; it drives the go / no-go call.</p>
   </section>
 
   <div class="grid-main">
-    <section class="panel" aria-label="Horizon view">
+    <section class="panel" id="horizonSec" aria-label="Horizon view">
       <div class="panel-head">
         <h2 id="horizonTitle">Sky above the site</h2>
         <span class="sub">Azimuth vs elevation. Vertical scale exaggerated.</span>
@@ -62,7 +86,7 @@
       <p class="explain">At the south pole the Sun never climbs more than about 1.5° because the Moon's axis is tilted only 1.5°. It circles the whole horizon once a month, so a hill in any direction can cast a long shadow. Earth wobbles up and down by about 7° (libration) in roughly the direction of the lunar near side.</p>
     </section>
 
-    <section class="panel" aria-label="Verdict and key numbers">
+    <section class="panel" id="readySec" aria-label="Verdict and key numbers">
       <div class="panel-head"><h2>Mission readiness</h2><span class="sub" id="windowLbl"></span></div>
       <div class="verdict" id="verdict"></div>
       <div class="stats" id="stats"></div>
@@ -80,15 +104,27 @@
     </div>
   </section>
 
+  <section class="panel" id="windowsSec" aria-label="Landing window heatmap">
+    <div class="panel-head"><h2>Landing window finder: every south-pole site, next 60 days</h2><span class="sub">Each square is one landing day. Click one to load it.</span></div>
+    <canvas id="winCv" height="230"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--good)"></i>GO</span>
+      <span><i style="background:var(--warn)"></i>CAUTION</span>
+      <span><i style="background:var(--bad)"></i>NO-GO</span>
+      <span>Brighter = more sunlight and Earth contact · ring = your current site and date</span>
+    </div>
+    <p class="explain">This is the whole planning problem in one picture. Read across a row to see how a site's prospects change from day to day, and down a column to compare sites on the same day. Every square runs a full mission simulation on real NASA terrain.</p>
+  </section>
+
   <div class="grid-main">
-    <section class="panel" aria-label="Site comparison">
+    <section class="panel" id="compareSec" aria-label="Site comparison">
       <div class="panel-head"><h2>Compare sites, same landing time</h2><span class="sub">Up to 5 sites</span></div>
       <div class="tablewrap"><table id="cmpTable"></table></div>
       <canvas id="cmpCv" height="160" style="margin-top:10px"></canvas>
       <p class="explain">Sites a few kilometers apart can differ by days of darkness. Ridges and crater rims see the Sun more often; crater floors near the pole can stay dark for billions of years, which is why water ice survives there.</p>
     </section>
 
-    <section class="panel" aria-label="Schedule slip">
+    <section class="panel" id="slipSec" aria-label="Schedule slip">
       <div class="panel-head"><h2>What if the launch slips?</h2><span class="sub" id="slipSite"></span></div>
       <div class="tablewrap"><table id="slipTable" class="slip"></table></div>
       <div class="btnrow" style="margin-top:10px">
@@ -101,7 +137,7 @@
   </div>
 
   <div class="grid-main">
-    <section class="panel" aria-label="Terrain illumination map">
+    <section class="panel" id="mapSec" aria-label="Terrain illumination map">
       <div class="panel-head"><h2>South pole lighting map</h2>
         <label class="field" for="mapRad" style="grid-auto-flow:column;align-items:center">View radius
           <select id="mapRad"><option value="30">30 km</option><option value="80">80 km</option><option value="170" selected>170 km</option></select></label>
@@ -124,6 +160,12 @@
       <p class="explain" style="margin-top:10px">LOLA is the laser altimeter on NASA's Lunar Reconnaissance Orbiter. It measured the height of the lunar surface billions of times. From those heights we trace a line in every direction to find how high the terrain rises, which gives each site its true horizon.</p>
     </section>
   </div>
+
+  <section class="panel" id="validSec" aria-label="Validation">
+    <div class="panel-head"><h2>How we know it's right</h2><span class="sub">Computed live in your browser from the NASA LOLA file</span></div>
+    <div class="tablewrap"><table id="validTable"><tbody><tr><td class="sub">Waiting for terrain…</td></tr></tbody></table></div>
+    <p class="sub" style="margin:8px 0 0;max-width:90ch">One-year runs from 1 Jan 2026 with a 2 m mast. The Sun and Earth positions also agree with an independent lunar libration model to within 0.03°, and the terrain ray tracer matches a hand-calculated case to within 0.1°. Run <span class="mono">npm test</span> and <span class="mono">npm run test:real</span> in the <a href="https://github.com/manitkalr1/lunar-lookout" target="_blank" rel="noopener">source code</a> to reproduce every number.</p>
+  </section>
 
   <footer>
     Method: Sun and Moon positions from astronomy-engine (VSOP87 / ELP-based, ~1 arcminute), rotated into the Moon's body-fixed frame with the IAU/WGCCRE lunar orientation model (aligned with LOLA's Mean-Earth frame to well under 0.1°). Terrain horizons are ray-traced every 0.5° of azimuth out to 150 km on the LOLA polar stereographic DEM, including lunar curvature. Sunlight uses the fraction of the solar disk above the horizon. Landing-site coordinates are approximate; verify in <a href="https://quickmap.lroc.asu.edu/" target="_blank" rel="noopener">LROC Quickmap</a>. Built for NASA Space Apps 2026, challenge: Lunar Landing Site Navigator.

@@ -1,0 +1,195 @@
+// Landing window heatmap, live validation, share links, CSV export and the guided tour.
+import { D2R, DAY, HOUR, st } from './state.js';
+import { SITES, CUSTOM, siteById, shortName } from './sites.js';
+import { series, metrics } from './analysis.js';
+import { demLL, llToMap, demH } from './terrain.js';
+import { renderAll, getMain, onRenderAll } from './render.js';
+import { fmtDate, fmtUTC, fmtH, pad } from './format.js';
+
+const $ = id => document.getElementById(id);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------------------------------------------------------------- heatmap
+const WIN_DAYS = 60;
+const winSites = () => SITES.filter(s => s.g === 'South pole');
+let win = null;      // {key, base, rows:[{site, cells:[{m}]}]}
+let winJob = 0;
+
+function winKey(base) { return [base, st.days, st.battery, st.mast, st.dem ? st.dem.name : 'flat'].join('|'); }
+
+function scheduleWindows() {
+  // Keep the 60-day window anchored while the chosen date stays inside it,
+  // so clicking a square doesn't shift the whole grid.
+  let base = win && st.t0 >= win.base && st.t0 < win.base + WIN_DAYS * DAY ? win.base : st.t0;
+  const key = winKey(base);
+  if (win && win.key === key) { drawWindows(); return; }
+  const job = ++winJob, sites = winSites();
+  win = { key, base, rows: sites.map(site => ({ site, cells: [] })) };
+  let i = 0;
+  const step = () => {
+    if (job !== winJob) return;                       // superseded by a newer request
+    const row = win.rows[i];
+    for (let d = 0; d < WIN_DAYS; d++) row.cells.push({ m: metrics(series(row.site, base + d * DAY, st.days)) });
+    drawWindows();
+    if (++i < win.rows.length) setTimeout(step, 0); else scheduleValidation();
+  };
+  drawWindows();
+  setTimeout(step, 30);
+}
+
+function drawWindows() {
+  const cv = $('winCv'); if (!cv || !win) return;
+  const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = +cv.getAttribute('height');
+  cv.width = w * dpr; cv.height = h * dpr; cv.style.height = h + 'px';
+  const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const narrow = w < 560, L = narrow ? 92 : 170, T = 4, B = 22, pw = w - L - 6, rh = (h - T - B) / win.rows.length, cw = pw / WIN_DAYS;
+  const col = { go: css('--good'), caution: css('--warn'), nogo: css('--bad') };
+  c.font = '12px "IBM Plex Sans", sans-serif'; c.textBaseline = 'middle';
+  win.rows.forEach((r, ri) => {
+    const y = T + ri * rh;
+    c.fillStyle = css('--ink-2'); c.textAlign = 'right'; c.fillText(shortName(r.site.name), L - 8, y + rh / 2, L - 12);
+    for (let d = 0; d < WIN_DAYS; d++) {
+      const x = L + d * cw, cell = r.cells[d];
+      if (!cell) { c.fillStyle = css('--line'); c.globalAlpha = 0.5; c.fillRect(x + 0.5, y + 1, cw - 1, rh - 2); c.globalAlpha = 1; continue; }
+      const m = cell.m, q = Math.min(1, (m.sun + m.earth) / 170);
+      c.fillStyle = col[m.verdict.lvl]; c.globalAlpha = 0.3 + 0.7 * q;
+      c.fillRect(x + 0.5, y + 1, Math.max(1, cw - 1), rh - 2); c.globalAlpha = 1;
+    }
+  });
+  // current site/day ring
+  const ri = win.rows.findIndex(r => r.site === st.site), d = Math.floor((st.t0 - win.base) / DAY);
+  if (ri >= 0 && d >= 0 && d < WIN_DAYS) {
+    c.strokeStyle = css('--ink'); c.lineWidth = 2;
+    c.strokeRect(L + d * cw - 1, T + ri * rh - 1, cw + 1, rh + 1);
+  }
+  c.fillStyle = css('--muted'); c.font = '11px "IBM Plex Mono", monospace'; c.textAlign = 'center'; c.textBaseline = 'top';
+  for (let k = 0; k < WIN_DAYS; k += narrow ? 15 : 10) c.fillText(fmtDate(win.base + k * DAY), Math.max(L + 24, L + (k + 0.5) * cw), h - B + 6);
+
+  const hit = e => {
+    const r = cv.getBoundingClientRect(), x = e.clientX - r.left - L, y = e.clientY - r.top - T;
+    const dd = Math.floor(x / cw), rr = Math.floor(y / rh);
+    if (dd < 0 || dd >= WIN_DAYS || rr < 0 || rr >= win.rows.length) return null;
+    return { row: win.rows[rr], d: dd, cell: win.rows[rr].cells[dd] };
+  };
+  const tip = $('tip');
+  cv.onmousemove = e => {
+    const k = hit(e); if (!k || !k.cell) { tip.style.opacity = 0; return; }
+    const m = k.cell.m;
+    tip.textContent = `${k.row.site.name}\nLand ${fmtDate(win.base + k.d * DAY)} · ${m.verdict.label}\nSunlight ${m.sun.toFixed(0)}% · Earth ${m.earth.toFixed(0)}%\nLongest night ${fmtH(m.longestDark)}`;
+    tip.style.opacity = 1; tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
+  };
+  cv.onmouseleave = () => { tip.style.opacity = 0; };
+  cv.onclick = e => { const k = hit(e); if (!k) return; st.site = k.row.site; st.t0 = win.base + k.d * DAY; st.frac = 0; renderAll(); };
+  cv.style.cursor = 'pointer';
+}
+
+// ---------------------------------------------------------------- validation
+let validKey = null;
+function scheduleValidation() {
+  const tbody = $('validTable');
+  if (!st.dem) { tbody.innerHTML = '<tbody><tr><td class="sub">Load LOLA terrain to run the checks.</td></tr></tbody>'; validKey = null; return; }
+  if (validKey === st.dem.name) return;
+  validKey = st.dem.name;
+  setTimeout(() => {
+    const keepMast = st.mast; st.mast = 2;
+    const year = id => metrics(series(siteById(id), Date.UTC(2026, 0, 1), 365));
+    const ridge = year('ridge'), shack = year('shackfloor'), haw = year('haworth');
+    st.mast = keepMast;
+    // Shackleton depth: rim ring vs floor
+    const floor = demLL(-89.67, 129.78), [X0, Y0] = llToMap(-89.67, 129.78);
+    let ring = 0, n = 0;
+    for (let a = 0; a < 360; a += 20) { const v = demH(X0 + 10.5 * Math.sin(a * D2R), Y0 + 10.5 * Math.cos(a * D2R)); if (!isNaN(v)) { ring += v; n++; } }
+    const depth = (ring / n - floor) / 1000;
+    let mal = -1e9;
+    for (const la of [-85.8, -86, -86.2, -86.4]) for (let lo = 0; lo <= 6; lo++) mal = Math.max(mal, demLL(la, lo));
+    const rows = [
+      ['Shackleton crater depth', `${depth.toFixed(1)} km`, '~4.2 km (Zuber et al. 2012, Nature)', Math.abs(depth - 4.2) < 0.6],
+      ['Malapert massif height', `${(mal / 1000).toFixed(1)} km`, '~5 km above datum', mal > 4000 && mal < 6000],
+      ['Shackleton floor sunlight (1 yr)', `${shack.sun.toFixed(1)}%`, 'Permanently shadowed', shack.sun < 1],
+      ['Haworth floor sunlight (1 yr)', `${haw.sun.toFixed(1)}%`, 'Permanently shadowed', haw.sun < 1],
+      ['Connecting ridge sunlight (1 yr)', `${ridge.sun.toFixed(0)}%`, '~80–90% (Mazarico et al. 2011, Icarus)', ridge.sun > 70 && ridge.sun < 95],
+      ['Connecting ridge longest night', fmtH(ridge.longestDark), 'Days, not weeks (Mazarico et al. 2011)', ridge.longestDark < 10 * 24],
+    ];
+    tbody.innerHTML = `<thead><tr><th>Check</th><th class="num">Lunar Lookout</th><th>Published science</th><th>Match</th></tr></thead><tbody>` +
+      rows.map(([k, v, ref, ok]) => `<tr><td>${k}</td><td class="num">${v}</td><td>${ref}</td><td>${ok ? '<span class="delta-up">✓ agrees</span>' : '<span class="delta-down">✕ check</span>'}</td></tr>`).join('') + '</tbody>';
+  }, 50);
+}
+
+// ---------------------------------------------------------------- share + CSV
+export function applyHash() {
+  const q = new URLSearchParams(location.hash.slice(1));
+  if (!q.size) return;
+  const site = q.get('site');
+  if (site === 'custom' && q.has('lat') && q.has('lon')) { CUSTOM.lat = +q.get('lat'); CUSTOM.lon = +q.get('lon'); st.site = CUSTOM; }
+  else if (siteById(site)) st.site = siteById(site);
+  const t = Date.parse(q.get('t') || '');
+  if (!isNaN(t)) st.t0 = Math.floor(t / HOUR) * HOUR;
+  const num = (k, lo, hi) => { const v = +q.get(k); return q.has(k) && v >= lo && v <= hi ? v : null; };
+  const d = num('days', 1, 90); if (d && [14, 30, 60, 90].includes(d)) { st.days = d; $('durSel').value = String(d); }
+  const m = num('mast', 0, 50); if (m !== null) { st.mast = m; $('mastIn').value = m; }
+  const b = num('battery', 1, 1000); if (b !== null) { st.battery = b; $('battIn').value = b; }
+}
+function shareURL() {
+  const q = new URLSearchParams({ site: st.site.id, t: new Date(st.t0).toISOString().slice(0, 13) + ':00Z', days: st.days, mast: st.mast, battery: st.battery });
+  if (st.site === CUSTOM) { q.set('lat', CUSTOM.lat); q.set('lon', CUSTOM.lon); }
+  return location.origin + location.pathname + '#' + q.toString();
+}
+function downloadCSV() {
+  const S = getMain();
+  const head = 'time_utc,sun_azimuth_deg,sun_elevation_deg,terrain_horizon_at_sun_deg,sun_disk_visible_fraction,earth_azimuth_deg,earth_elevation_deg,terrain_horizon_at_earth_deg,earth_in_view';
+  const lines = S.pts.map(q => [new Date(q.ms).toISOString(), q.sAz.toFixed(3), q.sEl.toFixed(4), q.sHz.toFixed(4), q.frac.toFixed(3), q.eAz.toFixed(3), q.eEl.toFixed(4), q.eHz.toFixed(4), q.eVis ? 1 : 0].join(','));
+  const meta = `# Lunar Lookout export: ${S.site.name} (${S.site.lat}, ${S.site.lon}), ${st.days}-day mission from ${fmtUTC(st.t0)}, mast ${st.mast} m, terrain ${S.H.terrain ? st.dem.name : 'smooth Moon'}`;
+  const blob = new Blob([meta + '\n' + head + '\n' + lines.join('\n') + '\n'], { type: 'text/csv' });
+  const a = document.createElement('a');
+  const d = new Date(st.t0);
+  a.href = URL.createObjectURL(blob);
+  a.download = `lunar-lookout_${S.site.id}_${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ---------------------------------------------------------------- guided tour
+const TOUR = [
+  { el: 'brief', title: 'The problem', text: 'Artemis astronauts and robotic landers are heading for the lunar south pole. There the Sun skims the horizon and mountains can hide Earth. Pick the wrong site or date and a lander loses power, or loses contact with Earth.' },
+  { el: 'horizonSec', title: 'The sky above a landing site', text: 'This is the sky above the connecting ridge, a 2 km high ridge beside Shackleton crater. The grey outline is the real horizon, traced from NASA LOLA laser-altimeter terrain. The orange track is the Sun over a 30-day mission and the blue loop is Earth. Press Play to watch them move.', act: () => setSite('ridge') },
+  { el: 'readySec', title: 'Is it a GO?', text: 'The app checks every hour of the mission for sunlight and Earth contact, compares the longest night with your battery, and makes the call. It also counts down to the next sunset and Earthset.' },
+  { el: 'slipSec', title: 'What if the launch slips?', text: 'Launches slip. This table reruns the whole mission for a 1-day, 1-week, 2-week and 1-month delay, so planners can see the risk before it happens.' },
+  { el: 'windowsSec', title: 'Find the landing window', text: 'Every square is a full mission simulation: 7 south-pole sites × 60 landing days on real terrain. Green means go. Click any square to load that landing.' },
+  { el: 'readySec', title: 'Where the ice hides', text: 'Now we are on the floor of Shackleton crater: 0% sunlight. This floor has not seen the Sun in billions of years, which is why water ice survives here. That ice is a big reason everyone is going to the south pole.', act: () => setSite('shackfloor') },
+  { el: 'mapSec', title: 'Live shadows across the pole', text: 'The lighting map casts shadows from the real terrain for the current moment. Drag the time slider or press Play and the shadows sweep around the pole. Click anywhere on the map to test your own landing spot.' },
+  { el: 'validSec', title: 'Can you trust it?', text: 'Every key number is checked live against published NASA-funded science, using the same data. Thanks for taking the tour!', act: () => setSite('ridge') },
+];
+let tourI = -1;
+function setSite(id) { const s = siteById(id); if (st.site !== s) { st.site = s; st.frac = 0; renderAll(); } }
+function showTour(i) {
+  document.querySelectorAll('.spot').forEach(n => n.classList.remove('spot'));
+  if (i < 0 || i >= TOUR.length) { $('tour').hidden = true; tourI = -1; return; }
+  tourI = i; const s = TOUR[i];
+  s.act?.();
+  $('tour').hidden = false;
+  $('tourStep').textContent = `Step ${i + 1} of ${TOUR.length}`;
+  $('tourTitle').textContent = s.title; $('tourText').textContent = s.text;
+  $('tourBack').disabled = i === 0;
+  $('tourNext').textContent = i === TOUR.length - 1 ? 'Finish' : 'Next';
+  const el = $(s.el); el.classList.add('spot');
+  el.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'center' });
+}
+
+// ---------------------------------------------------------------- wiring
+export function initFeatures() {
+  onRenderAll(() => { scheduleWindows(); scheduleValidation(); if (tourI < 0 && location.hash) history.replaceState(null, '', shareURL()); });
+  $('shareBtn').onclick = async () => {
+    const url = shareURL();
+    history.replaceState(null, '', url);
+    try { await navigator.clipboard.writeText(url); $('shareOut').textContent = 'Link copied. Anyone who opens it sees this exact scenario.'; }
+    catch (e) { $('shareOut').textContent = url; }
+  };
+  $('csvBtn').onclick = downloadCSV;
+  $('tourBtn').onclick = () => showTour(0);
+  $('tourNext').onclick = () => showTour(tourI + 1);
+  $('tourBack').onclick = () => showTour(tourI - 1);
+  $('tourClose').onclick = () => showTour(-1);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && tourI >= 0) showTour(-1); });
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(drawWindows, 160); });
+}

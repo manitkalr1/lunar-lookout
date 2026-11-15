@@ -3,6 +3,7 @@ import { HOUR, st } from './state.js';
 import { SITES, CUSTOM, siteById } from './sites.js';
 import { loadDEM, cacheDEM, restoreDEM, clearHorizonCache, mapToLL } from './terrain.js';
 import { renderAll, renderNow, renderCompare, renderMap, findBest } from './render.js';
+import { initFeatures, applyHash } from './features.js';
 
 const $ = id => document.getElementById(id);
 
@@ -22,6 +23,7 @@ async function handleFile(file) {
 
 function init() {
   st.site = SITES[0];
+  applyHash();  // a shared link can preset site, date and settings
 
   const sel = $('siteSel');
   const groups = {};
@@ -98,6 +100,7 @@ function init() {
   window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(renderAll, 150); });
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', renderAll);
 
+  initFeatures();
   renderAll();
   loadInitialTerrain();
 }

@@ -13,8 +13,10 @@ export const st = {
   frac: 0,           // slider position within the mission, 0..1
   days: 30,          // mission length
   mast: 2,           // panel / antenna height above ground, m
-  battery: 72,       // hours the lander survives without sunlight
-  compare: ['ridge', 'malapert', 'mouton', 'ce4'],
+  arrayW: 450,       // solar array output in full sunlight, W
+  loadW: 120,        // average power draw, W
+  battKWh: 8.6,      // usable battery capacity, kWh (8.6 kWh / 120 W = ~72 h of darkness)
+  compare: ['ridge', 'malapert', 'mouton', 'degerlache'],
   dem: null,         // loaded LOLA DEM, see terrain.js
   playing: false,
   mapRad: 170,       // lighting map half-width, km

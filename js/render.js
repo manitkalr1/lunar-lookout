@@ -39,12 +39,15 @@ export function renderAll() {
   renderHorizon(); renderReadiness(); renderStrip(); renderCompare(); renderSlip(); renderMap(); syncInputs();
   afterRender.forEach(fn => fn());
 }
-export function renderNow() { renderHorizon(); renderReadiness(); renderStrip(); renderMapThrottled(); syncTime(); }
+const timeListeners = [];
+export const onRenderNow = fn => timeListeners.push(fn);
+export function renderNow() { renderHorizon(); renderReadiness(); renderStrip(); renderMapThrottled(); syncTime(); timeListeners.forEach(fn => fn()); }
 
 function syncInputs() {
   $('siteSel').value = st.site.id;
   $('latIn').value = st.site.lat;
   $('lonIn').value = st.site.lon;
+  $('survOut').textContent = `≈ ${fmtH(st.battKWh * 1000 / st.loadW)} on battery in darkness`;
   const d = new Date(st.t0), p = n => String(n).padStart(2, '0');
   $('dateIn').value = `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}T${p(d.getUTCHours())}:00`;
   syncTime();
@@ -126,7 +129,10 @@ function renderReadiness() {
   $('windowLbl').textContent = `${st.days}-day mission from ${fmtDate(st.t0)}`;
   const v = m.verdict;
   $('verdict').className = 'verdict ' + v.lvl;
-  $('verdict').innerHTML = `<span class="pill ${v.lvl}">${v.label}</span><ul>${v.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul>`;
+  $('verdict').innerHTML = `<div class="score"><span class="score-n mono">${m.score.total}</span><span class="score-k">Landing Site Score</span><span class="pill ${v.lvl}">${v.label}</span></div><ul>${v.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul>`;
+  const sc0 = m.score;
+  $('scoreBars').innerHTML = [['Power survival', sc0.power, 40, '--accent'], ['Communication', sc0.comms, 35, '--earth'], ['Sunlight', sc0.light, 25, '--sun']]
+    .map(([k, v2, max, col]) => `<div class="sbar"><span>${k}</span><span class="track" role="img" aria-label="${k}: ${v2.toFixed(0)} of ${max} points"><span style="width:${(100 * v2 / max).toFixed(1)}%;background:var(${col})"></span></span><span class="mono">${v2.toFixed(0)}/${max}</span></div>`).join('');
   const sc = nextChange(S, t, 'sun'), ec = nextChange(S, t, 'earth');
   const sunTxt = sc.ms ? `${sc.now ? 'Sunset' : 'Sunrise'} in ${fmtDur(sc.ms - t)}` : (sc.now ? 'No sunset within 120 days' : 'No sunrise within 120 days');
   const earTxt = ec.ms ? `${ec.now ? 'Earthset' : 'Earthrise'} in ${fmtDur(ec.ms - t)}` : (ec.now ? 'Stays in view 120+ days' : 'Not visible for 120+ days');
@@ -136,8 +142,8 @@ function renderReadiness() {
     ['Earth above local horizon', sgn(now.eEl - now.eHz), 'earth', earTxt],
     ['Sunlight over mission', `${m.sun.toFixed(0)}%`, 'sun', `Longest night ${fmtH(m.longestDark)}`],
     ['Earth in view over mission', `${m.earth.toFixed(0)}%`, 'earth', `Longest blackout ${fmtH(m.longestNoEarth)}`],
-    ['Power + comm together', `${m.both.toFixed(0)}%`, '', 'Sunlit and Earth in view'],
-    ['Highest Sun over horizon', `${m.maxSun.toFixed(1)}°`, '', `Horizon: ${S.H.terrain ? 'LOLA terrain' : 'smooth Moon'}`],
+    ['Lowest battery', `${Math.round(m.minSoc * 100)}%`, '', m.deadH ? `Flat for ${fmtH(m.deadH)} from day ${m.firstDeadDay.toFixed(1)}` : `Survives ${fmtH(st.battKWh * 1000 / st.loadW)} of darkness`],
+    ['Highest Sun over horizon', `${m.maxSun.toFixed(1)}°`, '', `Horizon: ${S.H.terrain ? 'NASA LOLA terrain' : 'smooth Moon'}`],
   ].map(([k, val, cl, n]) => `<div class="stat"><span class="k">${k}</span><span class="v ${cl}">${val}</span><span class="n">${n}</span></div>`).join('');
 }
 
@@ -150,6 +156,12 @@ function drawStrips(cv, rows, opts) {
     const y = top + ri * rh;
     c.fillStyle = css('--ink-2'); c.textAlign = 'right'; c.fillText(r.label, L - 8, y + rh / 2, L - 12);
     const n = r.vals.length, bw = pw / n;
+    if (r.bars) {   // filled level chart (battery charge)
+      c.fillStyle = css('--shadow'); c.globalAlpha = 0.9; c.fillRect(L, y + 1, pw, rh - 3); c.globalAlpha = 1;
+      c.fillStyle = r.color;
+      for (let i = 0; i < n; i++) { const v = r.vals[i], bh = (rh - 3) * v; if (v > 0) c.fillRect(L + i * bw, y + 1 + (rh - 3) - bh, Math.ceil(bw + 0.5), bh); }
+      return;
+    }
     for (let i = 0; i < n; i++) {
       const v = r.vals[i];
       c.fillStyle = v > 0 ? r.color : css('--shadow'); c.globalAlpha = v > 0 ? 0.35 + 0.65 * v : 0.9;
@@ -182,21 +194,25 @@ function renderStrip() {
     { label: 'Sunlight', color: css('--sun'), vals: p.map(q => q.frac) },
     { label: 'Earth in view', color: css('--earth'), vals: p.map(q => (q.eVis ? 1 : 0)) },
     { label: 'Both', color: css('--good'), vals: p.map(q => (q.frac > 0.5 && q.eVis ? 1 : 0)) },
+    { label: 'Battery', color: css('--accent'), vals: Array.from(MAIN.soc), bars: true },
   ], {
     labelW: 96, days: st.days, cursor: st.frac,
     tipText: fx => {
       const q = p[Math.min(p.length - 1, Math.round(fx * (p.length - 1)))];
-      return `${fmtUTC(q.ms)}\nSun ${(q.sEl - q.sHz).toFixed(2)}° over horizon (${Math.round(q.frac * 100)}% disk)\nEarth ${(q.eEl - q.eHz).toFixed(2)}° over horizon`;
+      const i = Math.min(p.length - 1, Math.round(fx * (p.length - 1)));
+      return `${fmtUTC(q.ms)}\nSun ${(q.sEl - q.sHz).toFixed(2)}° over horizon (${Math.round(q.frac * 100)}% disk)\nEarth ${(q.eEl - q.eHz).toFixed(2)}° over horizon\nBattery ${Math.round(MAIN.soc[i] * 100)}%`;
     },
   });
+  const m = MAIN.m;
+  $('stripSummary').textContent = `Over the ${st.days}-day mission the site is sunlit ${m.sun.toFixed(0)}% of the time with a longest night of ${fmtH(m.longestDark)}, Earth is in view ${m.earth.toFixed(0)}% of the time, and the battery ${m.deadH ? `runs flat on day ${m.firstDeadDay.toFixed(1)}` : `never drops below ${Math.round(m.minSoc * 100)}%`}.`;
 }
 
 // ---------- comparison ----------
 export function renderCompare() {
   const rows = st.compare.slice(0, 5).map(id => { const s = siteById(id); const S = series(s, st.t0, st.days); return { s, S, m: metrics(S) }; });
   const t = $('cmpTable');
-  t.innerHTML = `<thead><tr><th>Site</th><th>Call</th><th class="num">Sunlight</th><th class="num">Earth in view</th><th class="num">Both</th><th class="num">Longest night</th><th class="num">Terrain</th><th></th></tr></thead><tbody>` +
-    rows.map(r => `<tr><td><button class="x link" data-go="${r.s.id}" title="Open this site">${esc(r.s.name)}</button></td><td><span class="pill ${r.m.verdict.lvl}">${r.m.verdict.label}</span></td><td class="num">${r.m.sun.toFixed(0)}%</td><td class="num">${r.m.earth.toFixed(0)}%</td><td class="num">${r.m.both.toFixed(0)}%</td><td class="num">${fmtH(r.m.longestDark)}</td><td class="num">${r.S.H.terrain ? 'LOLA' : 'smooth'}</td><td><button class="x" data-rm="${r.s.id}" aria-label="Remove ${esc(r.s.name)}">✕</button></td></tr>`).join('') + '</tbody>';
+  t.innerHTML = `<thead><tr><th>Site</th><th class="num">Score</th><th>Call</th><th class="num">Sunlight</th><th class="num">Earth in view</th><th class="num">Both</th><th class="num">Lowest battery</th><th class="num">Terrain</th><th><span class="sr-only">Remove</span></th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td><button class="x link" data-go="${r.s.id}" title="Open this site">${esc(r.s.name)}</button></td><td class="num"><strong>${r.m.score.total}</strong></td><td><span class="pill ${r.m.verdict.lvl}">${r.m.verdict.label}</span></td><td class="num">${r.m.sun.toFixed(0)}%</td><td class="num">${r.m.earth.toFixed(0)}%</td><td class="num">${r.m.both.toFixed(0)}%</td><td class="num">${r.m.deadH ? 'flat' : Math.round(r.m.minSoc * 100) + '%'}</td><td class="num">${r.S.H.terrain ? 'LOLA' : 'smooth'}</td><td><button class="x" data-rm="${r.s.id}" aria-label="Remove ${esc(r.s.name)}">✕</button></td></tr>`).join('') + '</tbody>';
   t.querySelectorAll('[data-rm]').forEach(b => (b.onclick = () => { st.compare = st.compare.filter(i => i !== b.dataset.rm); renderCompare(); }));
   t.querySelectorAll('[data-go]').forEach(b => (b.onclick = () => { st.site = siteById(b.dataset.go); st.frac = 0; renderAll(); }));
 
@@ -227,8 +243,8 @@ function renderSlip() {
     const up = v > b;
     return ` <span class="${up === goodUp ? 'delta-up' : 'delta-down'}" aria-label="${up === goodUp ? 'better' : 'worse'}">${up ? '▲' : '▼'}</span>`;
   };
-  $('slipTable').innerHTML = `<thead><tr><th>Landing</th><th>Call</th><th class="num">Sun</th><th class="num">Earth</th><th class="num">Night</th></tr></thead><tbody>` +
-    rows.map(r => `<tr><td>${r.l}<br><span class="sub mono">${fmtDate(st.t0 + r.d * DAY)}</span></td><td><span class="pill ${r.m.verdict.lvl}">${r.m.verdict.label}</span></td><td class="num">${r.m.sun.toFixed(0)}%${dl(r.m.sun, base.sun, true)}</td><td class="num">${r.m.earth.toFixed(0)}%${dl(r.m.earth, base.earth, true)}</td><td class="num">${fmtH(r.m.longestDark)}${dl(r.m.longestDark, base.longestDark, false)}</td></tr>`).join('') + '</tbody>';
+  $('slipTable').innerHTML = `<thead><tr><th>Landing</th><th class="num">Score</th><th>Call</th><th class="num">Sun</th><th class="num">Earth</th><th class="num">Night</th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td>${r.l}<br><span class="sub mono">${fmtDate(st.t0 + r.d * DAY)}</span></td><td class="num"><strong>${r.m.score.total}</strong>${dl(r.m.score.total, base.score.total, true)}</td><td><span class="pill ${r.m.verdict.lvl}">${r.m.verdict.label}</span></td><td class="num">${r.m.sun.toFixed(0)}%${dl(r.m.sun, base.sun, true)}</td><td class="num">${r.m.earth.toFixed(0)}%${dl(r.m.earth, base.earth, true)}</td><td class="num">${fmtH(r.m.longestDark)}${dl(r.m.longestDark, base.longestDark, false)}</td></tr>`).join('') + '</tbody>';
 }
 
 // ---------- best landing day ----------
@@ -236,7 +252,7 @@ export function findBest() {
   const out = $('bestOut'); out.textContent = 'Scanning 60 landing days…';
   setTimeout(() => {
     const { res, best } = scanLandingDays(st.site, st.t0, st.days, 60);
-    out.innerHTML = `Best day: <strong>${fmtDate(st.t0 + best.d * DAY)}</strong> (day +${best.d}) · ${best.m.sun.toFixed(0)}% sunlight, ${best.m.earth.toFixed(0)}% Earth in view, longest night ${fmtH(best.m.longestDark)}. <button id="useBest">Use this date</button>`;
+    out.innerHTML = `Best day: <strong>${fmtDate(st.t0 + best.d * DAY)}</strong> (day +${best.d}) · score ${best.m.score.total} · ${best.m.sun.toFixed(0)}% sunlight, ${best.m.earth.toFixed(0)}% Earth in view. <button id="useBest">Use this date</button>`;
     $('useBest').onclick = () => { st.t0 += best.d * DAY; st.frac = 0; renderAll(); };
     const cv = $('bestCv'); const { c, w, h } = prep(cv); const L = 40, B = 20, pw = w - L - 8, ph = h - B - 8;
     c.strokeStyle = css('--line'); c.fillStyle = css('--muted'); c.font = '11px "IBM Plex Mono", monospace';
@@ -247,8 +263,8 @@ export function findBest() {
     });
     const bw = pw / res.length;
     res.forEach((r, i) => {
-      const y = 8 + ph * (1 - r.m.sun / 100);
-      c.fillStyle = i === best.d ? css('--ink') : css('--sun');
+      const y = 8 + ph * (1 - r.m.score.total / 100);
+      c.fillStyle = i === best.d ? css('--ink') : css('--accent');
       c.fillRect(L + i * bw + 1, y, Math.max(1, bw - 2), 8 + ph - y);
     });
     c.fillStyle = css('--muted'); c.textAlign = 'center'; c.textBaseline = 'top';
@@ -257,7 +273,7 @@ export function findBest() {
       const rr = cv.getBoundingClientRect(), i = Math.floor((e.clientX - rr.left - L) / bw);
       if (i < 0 || i >= res.length) return hideTip();
       const r = res[i];
-      showTip(e, `Land ${fmtDate(st.t0 + r.d * DAY)}\nSunlight ${r.m.sun.toFixed(0)}% · Earth ${r.m.earth.toFixed(0)}%\nLongest night ${fmtH(r.m.longestDark)}`);
+      showTip(e, `Land ${fmtDate(st.t0 + r.d * DAY)} · score ${r.m.score.total}\nSunlight ${r.m.sun.toFixed(0)}% · Earth ${r.m.earth.toFixed(0)}%\nLowest battery ${Math.round(r.m.minSoc * 100)}%`);
     };
     cv.onmouseleave = hideTip;
   }, 20);

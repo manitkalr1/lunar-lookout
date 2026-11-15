@@ -41,5 +41,12 @@ check('Connecting ridge is among the best-lit spots (>60%; Mazarico et al. 2011 
 check('Ridge gets far more light than the crater floors', out.ridge.sun > out.shackfloor.sun + 50);
 check('Ridge longest night is days, not months (Mazarico et al. 2011)', out.ridge.longestDark < 10 * 24, (out.ridge.longestDark / 24).toFixed(1) + ' d');
 
+// Landing Site Score on real terrain (30-day mission from 15 Nov 2026, default lander)
+st.arrayW = 450; st.loadW = 120; st.battKWh = 8.6;
+const t1 = Date.UTC(2026, 10, 15);
+const ridge30 = metrics(series(SITES.find(s => s.id === 'ridge'), t1, 30));
+const floor30 = metrics(series(SITES.find(s => s.id === 'shackfloor'), t1, 30));
+check('Ridge scores far higher than the crater floor', ridge30.score.total > 60 && floor30.score.total === 0, `ridge ${ridge30.score.total}, floor ${floor30.score.total}`);
+
 console.log(fails ? `\n${fails} check(s) failed` : '\nAll real-data checks passed');
 process.exit(fails ? 1 : 0);

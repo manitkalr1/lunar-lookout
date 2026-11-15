@@ -11,7 +11,9 @@
     "test:real": "node tests/real-data.mjs"
   },
   "devDependencies": {
-    "astronomy-engine": "^2.1.19"
+    "astronomy-engine": "^2.1.19",
+    "axe-core": "^4.10.2",
+    "three": "^0.170.0"
   },
   "private": true,
   "type": "module"

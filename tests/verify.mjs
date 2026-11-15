@@ -55,6 +55,19 @@ const latlon = v => { const n = Math.hypot(...v); return [Math.asin(v[2] / n) * 
   check('Smooth-Moon pole ridge is mostly sunlit', pole.sun > 60, `${pole.sun.toFixed(0)}%`);
 }
 
+// 4b. Power model: a 14-day equatorial night drains a 72 h battery; the
+//     battery dies after exactly capacity / load hours of darkness.
+{
+  st.dem = null; st.mast = 2; st.arrayW = 450; st.loadW = 120; st.battKWh = 8.6;
+  const m = metrics(series({ lat: 0.674, lon: 23.473 }, Date.UTC(2026, 0, 1), 30));
+  check('Apollo 11 site: battery runs flat during the 14-day lunar night', m.deadH > 200, `${m.deadH} h without power`);
+  check('…so the Landing Site Score power part is zero', m.score.power === 0, `score ${m.score.total}`);
+  st.arrayW = 0;   // no solar array at all: dies after 8600 Wh / 120 W = 71.7 h
+  const z = metrics(series({ lat: 0.674, lon: 23.473 }, Date.UTC(2026, 0, 1), 14));
+  check('Battery lasts capacity / load hours', Math.abs(z.firstDeadDay * 24 - 72) <= 1, `${(z.firstDeadDay * 24).toFixed(0)} h (expected 72)`);
+  st.arrayW = 450;
+}
+
 // 5. Terrain ray tracer against an analytic case: synthetic DEM, flat at 0 m
 //    with a 2000 m high ring 20 km from the pole. From the pole, the horizon
 //    elevation should be atan((2 km - curvature drop) / 20 km).

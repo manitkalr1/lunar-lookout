@@ -48,7 +48,13 @@ function init() {
   };
   $('durSel').onchange = e => { st.days = +e.target.value; renderAll(); };
   $('mastIn').onchange = e => { st.mast = Math.max(0, Math.min(50, +e.target.value || 0)); clearHorizonCache(); renderAll(); };
-  $('battIn').onchange = e => { st.battery = Math.max(1, +e.target.value || 72); renderAll(); };
+  const power = () => {
+    st.arrayW = Math.max(0, +$('arrayIn').value || 0);
+    st.loadW = Math.max(1, +$('loadIn').value || 1);
+    st.battKWh = Math.max(0.1, +$('battIn').value || 0.1);
+    renderAll();
+  };
+  ['arrayIn', 'loadIn', 'battIn'].forEach(id => ($(id).onchange = power));
 
   $('addCmp').onclick = () => {
     if (st.site === CUSTOM) {
@@ -119,7 +125,20 @@ async function loadInitialTerrain() {
     setDemStatus('Loading NASA LOLA terrain (29 MB)…', false);
     const res = await fetch(BUNDLED);
     if (!res.ok) throw new Error(res.status);
-    const r = loadDEM(await res.arrayBuffer(), 'LDEM_75S_240M.IMG');
+    const total = +res.headers.get('content-length') || 29062688;
+    const prog = $('demProg'); prog.hidden = false;
+    const buf = new Uint8Array(total); let got = 0;
+    const reader = res.body.getReader();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (got + value.length > buf.length) throw new Error('size');
+      buf.set(value, got); got += value.length;
+      prog.value = got / total;
+      setDemStatus(`Loading NASA LOLA terrain… ${Math.round(100 * got / total)}%`, false);
+    }
+    prog.hidden = true;
+    const r = loadDEM(buf.buffer.slice(0, got), 'LDEM_75S_240M.IMG');
     setDemStatus(r.message, r.ok);
     if (r.ok) renderAll();
   } catch (e) {

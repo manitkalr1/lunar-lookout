@@ -179,4 +179,9 @@ The app has an in-page **NASA data and resources** table listing every resource 
 
 ## Team
 
-_Add names and roles._
+| Name | Role | Focus |
+|---|---|---|
+| **Manit Kalra** | Mission Analysis & Software Lead | Orbital geometry and terrain-horizon engine, power simulation and Landing Site Score, validation against JPL Horizons and NASA's illumination maps, app architecture and deployment |
+| **Reyansh Parekh** | Product, Science Communication & Data Lead | Challenge requirements and app specification, NASA data sourcing (LOLA, Artemis candidate regions), the lunar weather forecast and user experience, demo and presentation |
+
+Built for the NASA Space Apps Challenge 2026.

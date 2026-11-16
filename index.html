@@ -38,7 +38,7 @@
     <div class="brief-text" id="briefText">
       <h2>Why this matters</h2>
       <p>NASA's Artemis astronauts and a wave of robotic landers are heading to the lunar south pole, where water ice hides in craters that never see the Sun. Down there the Sun never climbs more than about 2° above level. It circles the horizon once a month, so a single hill can throw a site into days of darkness, and mountains can hide Earth and cut off communication. A site that is perfect on one date can leave a lander dark and silent one week later.</p>
-      <p>Lunar Lookout puts NASA's own laser-altimeter terrain (LRO LOLA) and the real motion of the Sun and Earth into one tool. Mission planners, students and space fans can all see, hour by hour, whether a landing site gets <strong class="t-sun">sunlight for power</strong> and keeps <strong class="t-earth">Earth in view for radio contact</strong>.</p>
+      <p>Lunar Lookout puts NASA's own laser-altimeter terrain (LRO LOLA) and the real motion of the Sun and Earth into one tool, covering all nine of NASA's candidate Artemis landing regions. Mission planners, students and space fans can all see, hour by hour, whether a landing site gets <strong class="t-sun">sunlight for power</strong> and keeps <strong class="t-earth">Earth in view for radio contact</strong>.</p>
     </div>
     <div class="btnrow brief-actions"><button id="tourBtn" class="primary">Take the 60-second tour</button><button id="briefMore" aria-expanded="false" aria-controls="briefText briefFacts">Read more</button></div>
     <ul class="brief-facts" id="briefFacts">
@@ -115,7 +115,7 @@
       <div class="verdict" id="verdict"></div>
       <div class="sbars" id="scoreBars"></div>
       <div class="stats" id="stats"></div>
-      <p class="explain" style="margin-top:10px">The Landing Site Score adds up three parts: power survival (40 points, scaled by the lowest battery level and zero if it ever runs flat), communication (35 points × the share of time Earth is in view) and sunlight (25 points × the share of time the Sun is up). Sunlight % counts how much of the Sun's disk clears the local horizon (it is about 0.5° wide, so partial sunrise matters). Earth in view means the center of Earth is above the terrain, so a direct antenna link is possible without a relay satellite.</p>
+      <p class="explain" style="margin-top:10px">The Landing Site Score adds up three parts: power survival (40 points, scaled by the lowest battery level and zero if it ever runs flat), communication (35 points × the share of time Earth is in view) and sunlight (25 points × the share of time the Sun is up). Sunlight % counts how much of the Sun's disk clears the local horizon (it is about 0.5° wide, so partial sunrise matters). Earth in view means the center of Earth is above the terrain, so there is a clear line of sight for a direct antenna link without a relay satellite. NASA notes that terrain also affects radio on the lunar surface, so a real link further depends on antenna height, transmitter power and Deep Space Network coverage.</p>
     </section>
   </div>
 
@@ -132,8 +132,8 @@
   </section>
 
   <section class="panel" id="windowsSec" aria-label="Landing window heatmap">
-    <div class="panel-head"><h2>Landing window finder: every south-pole site, next 60 days</h2><span class="sub">Each square is one landing day. Click one to load it.</span></div>
-    <canvas id="winCv" height="230" tabindex="0" role="application" aria-label="Landing window heatmap. Use arrow keys to move between sites and days, Enter to load the selected landing." aria-describedby="winSummary"></canvas>
+    <div class="panel-head"><h2>Landing window finder: NASA's nine Artemis candidate regions, next 60 days</h2><span class="sub">Each square is one landing day. Click one to load it.</span></div>
+    <canvas id="winCv" height="300" tabindex="0" role="application" aria-label="Landing window heatmap. Use arrow keys to move between sites and days, Enter to load the selected landing." aria-describedby="winSummary"></canvas>
     <p class="sr-only" id="winSummary" aria-live="polite"></p>
     <div class="legend">
       <span><i style="background:var(--good)"></i>GO</span>
@@ -141,7 +141,7 @@
       <span><i style="background:var(--bad)"></i>NO-GO</span>
       <span>Brighter = higher Landing Site Score · ring = your current site and date</span>
     </div>
-    <p class="explain">This is the whole planning problem in one picture. Read across a row to see how a site's prospects change from day to day, and down a column to compare sites on the same day. Every square runs a full mission simulation on real NASA terrain.</p>
+    <p class="explain">Rows are the nine regions NASA named as candidate Artemis landing regions in October 2024, plus the connecting ridge for comparison. In each region the app uses the best-lit spot with gentle slopes (10° or less) near the region's centre. This is the whole planning problem in one picture. Read across a row to see how a site's prospects change from day to day, and down a column to compare sites on the same day. Every square runs a full mission simulation on real NASA terrain.</p>
   </section>
 
   <div class="grid-main">
@@ -185,7 +185,7 @@
     <section class="panel" id="mapSec" aria-label="Terrain illumination map">
       <div class="panel-head"><h2>South pole lighting map</h2>
         <label class="field" for="mapRad" style="grid-auto-flow:column;align-items:center">View radius
-          <select id="mapRad"><option value="30">30 km</option><option value="80">80 km</option><option value="170" selected>170 km</option></select></label>
+          <select id="mapRad"><option value="30">30 km</option><option value="80">80 km</option><option value="170">170 km</option><option value="220" selected>220 km</option></select></label>
       </div>
       <div class="map-wrap"><canvas id="mapCv" width="480" height="480" aria-label="Lighting map with cast shadows"></canvas></div>
       <div class="legend">
@@ -212,6 +212,27 @@
     <div class="panel-head"><h2>How we know it's right</h2><span class="sub">Computed live in your browser from NASA LOLA terrain, checked against NASA JPL Horizons and published science</span></div>
     <div class="tablewrap" tabindex="0" role="region" aria-label="Validation table"><table id="validTable"><tbody><tr><td class="sub">Running checks…</td></tr></tbody></table></div>
     <p class="sub" style="margin:8px 0 0;max-width:90ch">One-year runs from 1 Jan 2026 with a 2 m mast. The Sun and Earth positions also agree with an independent lunar libration model to within 0.03°, and the terrain ray tracer matches a hand-calculated case to within 0.1°. Run <span class="mono">npm test</span> and <span class="mono">npm run test:real</span> in the <a href="https://github.com/manitkalr1/lunar-lookout" target="_blank" rel="noopener">source code</a> to reproduce every number.</p>
+  </section>
+
+  <section class="panel" id="dataSec" aria-label="NASA data and resources">
+    <div class="panel-head"><h2>NASA data and resources</h2><span class="sub">From the challenge's resource list, and exactly how each one is used</span></div>
+    <div class="tablewrap" tabindex="0" role="region" aria-label="NASA data and resources table">
+      <table class="res">
+        <thead><tr><th>Resource</th><th>Role</th><th>How Lunar Lookout uses it</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/" target="_blank" rel="noopener">LRO LOLA polar elevation model (LDEM_75S_240M)</a></td><td><span class="tag tag-core">Core data</span></td><td>Every terrain horizon, sunlight and Earth-visibility number, the lighting map, the 3D view and the landing window finder. 3812 × 3812 laser-altimeter heights at 240 m per pixel, loaded in your browser.</td></tr>
+          <tr><td><a href="https://pds-geosciences.wustl.edu/missions/lro/lola.htm" target="_blank" rel="noopener">PDS Geosciences Node: LRO LOLA archive</a></td><td><span class="tag tag-core">Core data</span></td><td>Official archive and format description for the LOLA files (16-bit heights, 0.5 m scaling, polar stereographic projection).</td></tr>
+          <tr><td><a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" rel="noopener">NASA JPL Horizons</a></td><td><span class="tag tag-validation">Validation</span></td><td>Independent check of the app&#x27;s Sun position from a lunar surface site, shown live in &quot;How we know it&#x27;s right&quot;.</td></tr>
+          <tr><td>NASA Artemis candidate landing regions (28 Oct 2024)</td><td><span class="tag tag-core">Core data</span></td><td>The nine regions in the landing window finder, site list and map. NASA published them as map outlines; the centres were digitised from that map by Team AFUQ (MIT licence).</td></tr>
+          <tr><td><a href="https://quickmap.lroc.im-ldi.com/" target="_blank" rel="noopener">LROC QuickMap</a></td><td><span class="tag tag-checking">Checking</span></td><td>Use it to inspect any site in the app against LRO camera images and to confirm coordinates.</td></tr>
+          <tr><td><a href="https://trek.nasa.gov/moon/" target="_blank" rel="noopener">NASA Moon Trek</a></td><td><span class="tag tag-checking">Checking</span></td><td>3D lunar imagery and terrain viewer for exploring the same regions.</td></tr>
+          <tr><td><a href="https://pgda.gsfc.nasa.gov/products/69" target="_blank" rel="noopener">NASA PGDA: Lunar Polar Illumination</a></td><td><span class="tag tag-reference">Reference</span></td><td>NASA&#x27;s long-term (~18.6 year) average illumination maps. Our one-year results are in line with published illumination studies; a direct map-to-map comparison is a planned next step.</td></tr>
+          <tr><td><a href="https://naif.jpl.nasa.gov/naif/data_generic.html" target="_blank" rel="noopener">JPL NAIF SPICE generic kernels</a></td><td><span class="tag tag-reference">Reference</span></td><td>The standard for spacecraft geometry. The app uses the same IAU lunar orientation model in the browser, and checks the result against Horizons.</td></tr>
+          <tr><td><a href="https://ntrs.nasa.gov/api/citations/20230007818/downloads/ACD-50044%20Lunar%20Surface%20Data%20Book%20Rev%20A.pdf" target="_blank" rel="noopener">NASA Lunar Surface Data Book</a></td><td><span class="tag tag-reference">Reference</span></td><td>Definitions of illumination, Earth visibility and permanent shadow used to frame the app&#x27;s metrics.</td></tr>
+          <tr><td><a href="https://www.nasa.gov/glenn/glenn-expertise-space-exploration/scan/lunar-surface-propagation/" target="_blank" rel="noopener">NASA Glenn: Lunar Surface Propagation</a></td><td><span class="tag tag-reference">Reference</span></td><td>Terrain affects radio on the Moon. &quot;Earth in view&quot; in this app means a clear line of sight, the first requirement for a direct-to-Earth link, not a full link budget.</td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <footer>

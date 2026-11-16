@@ -192,3 +192,11 @@ button.x:hover:not(:disabled) { background:none; color:var(--ink) }
 .drop, .drop * { overflow-wrap:anywhere }
 .drop > *, .drop .field { min-width:0 }
 input[type=file] { max-width:100%; width:100% }
+
+/* NASA resources table */
+table.res td:first-child { min-width:180px }
+table.res td { vertical-align:top }
+.tag { display:inline-block; font-size:11.5px; font-weight:600; padding:2px 7px; border-radius:999px; border:1px solid var(--line); white-space:nowrap; color:var(--ink) }
+.tag-core { background:color-mix(in srgb, var(--good) 18%, transparent); border-color:color-mix(in srgb, var(--good) 50%, var(--line)) }
+.tag-validation { background:color-mix(in srgb, var(--earth) 18%, transparent); border-color:color-mix(in srgb, var(--earth) 50%, var(--line)) }
+.tag-checking { background:color-mix(in srgb, var(--sun) 16%, transparent); border-color:color-mix(in srgb, var(--sun) 50%, var(--line)) }

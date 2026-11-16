@@ -350,13 +350,18 @@ export function renderMap() {
 
   c.font = '600 11px "IBM Plex Sans", sans-serif'; c.textBaseline = 'middle';
   const toPx = (lat, lon) => { const [X, Y] = llToMap(lat, lon); return [W / 2 + X / kpp, W / 2 - Y / kpp]; };
+  // NASA Artemis candidate regions: dashed ~15 km circles around each centre.
+  c.save(); c.setLineDash([4, 3]); c.lineWidth = 1.5; c.strokeStyle = 'rgba(255,255,255,.85)';
+  SITES.filter(s2 => s2.artemis).forEach(s2 => { const [x, y] = toPx(...s2.centre); c.beginPath(); c.arc(x, y, 7.5 / kpp, 0, 7); c.stroke(); });
+  c.restore();
   [...SITES, CUSTOM].filter(s2 => s2.lat < -80 && (s2 !== CUSTOM || st.site === CUSTOM)).forEach(s2 => {
     const [x, y] = toPx(s2.lat, s2.lon);
     if (x < 0 || y < 0 || x > W || y > W) return;
     const sel = s2 === st.site;
     c.beginPath(); c.arc(x, y, sel ? 6 : 4, 0, 7); c.fillStyle = sel ? css('--accent') : '#ffffff'; c.fill();
     c.lineWidth = 2; c.strokeStyle = '#000'; c.stroke();
-    if (sel || rad >= 80) {
+    // Label the selected site always; everything when zoomed in; only Artemis regions at the widest view.
+    if (sel || rad <= 80 || s2.artemis) {
       c.fillStyle = '#fff'; c.strokeStyle = 'rgba(0,0,0,.8)'; c.lineWidth = 3;
       const t = shortName(s2.name); c.textAlign = x > W - 120 ? 'right' : 'left';
       const tx = x + (c.textAlign === 'left' ? 9 : -9); c.strokeText(t, tx, y); c.fillText(t, tx, y);

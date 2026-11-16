@@ -28,7 +28,8 @@ NASA's Artemis astronauts and many robotic landers are heading to the lunar sout
 - **Horizon view**: the 360° real terrain horizon with the Sun and Earth paths over the whole mission, plus a time slider and Play button
 - **Lunar weather forecast**: one plain-language line ("☀️ Sunny, sunset in 87 h · 🌍 Earth hidden, Earthrise in 44 h · Mission call: GO") that updates as you move through time
 - **Landing Site Score (0–100) and GO / CAUTION / NO-GO call**: from an hour-by-hour power simulation (solar array, power draw, battery) plus Earth contact. Countdowns show the next sunset and Earthset
-- **Landing window finder**: a heatmap of every south-pole site × the next 60 landing days, where each square is a full mission simulation. Click a square to load it
+- **NASA's nine Artemis candidate regions**: Peak near Cabeus B, Haworth, Malapert Massif, Mons Mouton Plateau, Mons Mouton, Nobile Rim 1, Nobile Rim 2, de Gerlache Rim 2 and Slater Plain, each analysed at its best-lit gentle spot
+- **Landing window finder**: a heatmap of the nine Artemis regions (plus the connecting ridge) × the next 60 landing days, where each square is a full mission simulation. Click a square to load it
 - **Launch-slip analysis**: what a +1 day, +1 week, +2 weeks or +1 month delay changes
 - **Site comparison**: up to 5 sites side by side
 - **3D terrain view with live shadows**: the real terrain around the site, lit by the true Sun. "Lander's eye" shows the horizon as the lander sees it
@@ -39,11 +40,27 @@ NASA's Artemis astronauts and many robotic landers are heading to the lunar sout
 
 ### Landing window finder
 
-![Landing window heatmap: every south-pole site × the next 60 days](docs/heatmap.png)
+![Landing window heatmap: NASA's nine Artemis candidate regions × the next 60 days](docs/heatmap.png)
 
 ### 3D terrain with live shadows
 
 ![3D view of the connecting ridge from NASA LOLA terrain](docs/3d.png)
+
+## NASA's Artemis candidate regions
+
+NASA named nine candidate landing regions for Artemis on 28 October 2024, published only as outlines on a map. The region centres come from Team AFUQ's open digitisation of that map ([ziyadell/Lunar-Landing-Site-Navigator](https://github.com/ziyadell/Lunar-Landing-Site-Navigator), MIT licence, about 0.5 km accuracy). Inside each region, Lunar Lookout picks its own analysis point: the best-lit spot with slope ≤ 10° within 4 km of the centre, on NASA LOLA terrain over 2027 (`tools/find-region-points.mjs`). These are representative analysis points, not NASA-designated landing sites.
+
+| Region | Analysis point | Sunlight 2027 | Earth in view 2027 |
+|---|---|---|---|
+| Nobile Rim 1 | 85.543°S, 37.586°E | 82.6% | 61.5% |
+| Mons Mouton | 85.481°S, 31.399°E | 76.1% | 55.7% |
+| Malapert Massif | 85.992°S, 0.254°E | 65.1% | 76.9% |
+| Peak near Cabeus B | 83.592°S, 68.460°W | 62.3% | 67.8% |
+| Slater Plain | 87.223°S, 127.309°E | 60.9% | 33.5% |
+| Haworth | 86.769°S, 20.588°W | 52.3% | 63.0% |
+| Nobile Rim 2 | 84.043°S, 59.286°E | 52.0% | 71.6% |
+| Mons Mouton Plateau | 84.279°S, 29.918°E | 51.7% | 100.0% |
+| de Gerlache Rim 2 | 88.310°S, 62.095°W | 42.9% | 49.8% |
 
 ## Landing Site Score
 
@@ -123,6 +140,11 @@ The tests check:
 
 ## Data sources
 
+The app has an in-page **NASA data and resources** table listing every resource from the challenge and how it is used. Summary:
+
+
+- **NASA Artemis candidate regions** (28 Oct 2024). Centres digitised by Team AFUQ (MIT licence), see above
+- **LROC QuickMap** and **NASA Moon Trek** for checking sites against imagery
 - **LRO LOLA** `LDEM_75S_240M` polar elevation model (NASA PDS Geosciences Node / MIT imbrium mirror), bundled in `data/`
 - **astronomy-engine** 2.1.19 and **three.js** 0.170 (both MIT licence), bundled in `vendor/`
 - Landing-site coordinates are approximate. Verify them in [LROC Quickmap](https://quickmap.lroc.im-ldi.com/) before quoting.
@@ -132,7 +154,7 @@ The tests check:
 
 - North of 75°S there is no terrain in the bundled file, so those sites (Apollo, Chang'e) use a smooth Moon.
 - The 240 m DEM smooths out features smaller than a few pixels. The 40 m file is better for sites within 5° of the pole.
-- Earth visibility uses the centre of Earth's disk and doesn't check Deep Space Network station schedules. Sunlight ignores light reflected from nearby terrain.
+- Earth visibility uses the centre of Earth's disk and means a clear line of sight. As NASA's Lunar Surface Propagation work notes, terrain also affects radio, so a real link depends on antenna height, power and Deep Space Network coverage. Sunlight ignores light reflected from nearby terrain.
 - The power model is a planning sketch. It uses a constant load and no temperature effects, and the battery starts full.
 - The 3D view applies vertical exaggeration (×2 by default) to both terrain and light, so shadows stay correct.
 

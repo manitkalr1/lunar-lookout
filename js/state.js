@@ -16,9 +16,9 @@ export const st = {
   arrayW: 450,       // solar array output in full sunlight, W
   loadW: 120,        // average power draw, W
   battKWh: 8.6,      // usable battery capacity, kWh (8.6 kWh / 120 W = ~72 h of darkness)
-  compare: ['ridge', 'malapert', 'mouton', 'degerlache'],
+  compare: ['ridge', 'nobile1', 'malapert', 'mouton', 'shackfloor'],
   dem: null,         // loaded LOLA DEM, see terrain.js
   demLoading: false, // true while the bundled DEM downloads
   playing: false,
-  mapRad: 170,       // lighting map half-width, km
+  mapRad: 220,       // lighting map half-width, km (wide enough for all nine Artemis regions)
 };

@@ -31,7 +31,7 @@ st.mast = 2; st.battery = 72;
 const t0 = Date.UTC(2026, 0, 1);
 const year = id => metrics(series(SITES.find(s => s.id === id), t0, 365));
 const out = {};
-for (const id of ['ridge', 'pole', 'malapert', 'mouton', 'degerlache', 'shackfloor', 'haworth']) {
+for (const id of ['ridge', 'pole', 'nobile1', 'malapert', 'mouton', 'degerlache', 'shackfloor', 'haworth']) {
   out[id] = year(id);
   console.log(`      ${id.padEnd(11)} sunlight ${out[id].sun.toFixed(1).padStart(5)}%   Earth ${out[id].earth.toFixed(1).padStart(5)}%   longest night ${(out[id].longestDark / 24).toFixed(1)} d`);
 }
@@ -40,6 +40,22 @@ check('Haworth floor is permanently shadowed (<1% sunlight)', out.haworth.sun < 
 check('Connecting ridge is among the best-lit spots (>60%; Mazarico et al. 2011 report ~80–90% at points near it)', out.ridge.sun > 60, out.ridge.sun.toFixed(1) + '%');
 check('Ridge gets far more light than the crater floors', out.ridge.sun > out.shackfloor.sun + 50);
 check('Ridge longest night is days, not months (Mazarico et al. 2011)', out.ridge.longestDark < 10 * 24, (out.ridge.longestDark / 24).toFixed(1) + ' d');
+
+// NASA Artemis candidate regions: each analysis point sits within 4 km of its
+// region centre on gentle ground and is reasonably lit over 2027.
+{
+  const R = 1737.4, rad = Math.PI / 180;
+  const dist = (a, b) => R * Math.acos(Math.min(1, Math.sin(a[0] * rad) * Math.sin(b[0] * rad) + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.cos((a[1] - b[1]) * rad)));
+  const arts = SITES.filter(s => s.artemis);
+  check('Nine Artemis candidate regions are listed', arts.length === 9, arts.map(s => s.id).join(', '));
+  let worst = 0, minSun = 100;
+  for (const s of arts) {
+    worst = Math.max(worst, dist([s.lat, s.lon], s.centre));
+    minSun = Math.min(minSun, metrics(series(s, Date.UTC(2027, 0, 1), 365)).sun);
+  }
+  check('Each region point is within 4 km of its region centre', worst <= 4.05, worst.toFixed(2) + ' km max');
+  check('Each region point gets at least 40% sunlight over 2027', minSun >= 40, minSun.toFixed(1) + '% lowest');
+}
 
 // Landing Site Score on real terrain (30-day mission from 15 Nov 2026, default lander)
 st.arrayW = 450; st.loadW = 120; st.battKWh = 8.6;

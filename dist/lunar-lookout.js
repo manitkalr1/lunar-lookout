@@ -11600,14 +11600,16 @@ Cursor elevation ${el2.toFixed(2)}°`);
     const calc = st.demLoading && inDem;
     $("verdict").className = "verdict " + v.lvl + (calc ? " calc" : "");
     $("verdict").setAttribute("aria-busy", String(calc));
-    $("verdict").innerHTML = `<div class="score"><span class="score-n mono" title="Landing Site Score from 0 to 100: power survival (40) + communication (35) + sunlight (25)">${m.score.total}</span><span class="score-k">Landing Site Score${calc ? " · calculating…" : ""}</span><span class="pill ${v.lvl}">${v.label}</span></div><ul>${v.why.map((w2) => `<li>${esc(w2)}</li>`).join("")}</ul>`;
+    $("verdict").innerHTML = `<div class="score"><span class="ring" style="--p:${m.score.total}" title="Landing Site Score from 0 to 100: power survival (40) + communication (35) + sunlight (25)"><span class="score-n mono">${m.score.total}</span></span><span class="score-k">Landing Site Score${calc ? " · calculating…" : ""}</span><span class="pill ${v.lvl}">${v.label}</span></div><ul>${v.why.map((w2) => `<li>${esc(w2)}</li>`).join("")}</ul>`;
     $("scoreBars").classList.toggle("calc", calc);
     const sc0 = m.score;
     $("scoreBars").innerHTML = [["Power survival", sc0.power, 40, "--accent"], ["Communication", sc0.comms, 35, "--earth"], ["Sunlight", sc0.light, 25, "--sun"]].map(([k2, v2, max, col]) => `<div class="sbar"><span>${k2}</span><span class="track" role="img" aria-label="${k2}: ${v2.toFixed(0)} of ${max} points"><span style="width:${(100 * v2 / max).toFixed(1)}%;background:var(${col})"></span></span><span class="mono">${v2.toFixed(0)}/${max}</span></div>`).join("");
     const sc2 = nextChange(S2, t2, "sun"), ec2 = nextChange(S2, t2, "earth");
     sc2.from = ec2.from = t2;
     $("forecast").className = "forecast " + v.lvl;
-    $("fcLine").innerHTML = forecastLine(now, sc2, ec2, v).split(" · ").map((p2) => `<span class="fc-part">${esc(p2)}</span>`).join('<span class="fc-sep" aria-hidden="true"> · </span>');
+    $("forecast").dataset.sky = sunWord(now.frac).state;
+    const parts = forecastLine(now, sc2, ec2, v).split(" · ");
+    $("fcLine").innerHTML = parts.map((p2, i) => `<span class="fc-part">${esc(p2)}${i < parts.length - 1 ? '<span class="fc-sep" aria-hidden="true"> ·</span>' : ""}</span>`).join(" ");
     $("fcExplain").textContent = explainLine(now, sc2, ec2);
     const sunTxt = sc2.ms ? `${sc2.now ? "Sunset" : "Sunrise"} in ${fmtDur(sc2.ms - t2)}` : sc2.now ? "No sunset within 120 days" : "No sunrise within 120 days";
     const earTxt = ec2.ms ? `${ec2.now ? "Earthset" : "Earthrise"} in ${fmtDur(ec2.ms - t2)}` : ec2.now ? "Stays in view 120+ days" : "Not visible for 120+ days";
@@ -12439,7 +12441,43 @@ Lowest battery ${Math.round(m.minSoc * 100)}%${m.deadH ? " (runs flat)" : ""}`;
       $2("view3dMsg").textContent = "3D view needs WebGL, which this browser does not provide. Everything else still works.";
     }
   }
+  function initNavAndReveal() {
+    const links = [...document.querySelectorAll(".navlinks a")];
+    const byId = new Map(links.map((a) => [a.getAttribute("href").slice(1), a]));
+    const seen = /* @__PURE__ */ new Map();
+    const spy = new IntersectionObserver((es2) => {
+      es2.forEach((e2) => seen.set(e2.target.id, e2.isIntersecting ? e2.intersectionRatio : 0));
+      let best = null, r = 0;
+      for (const [id2, ratio] of seen) if (ratio > r) {
+        r = ratio;
+        best = id2;
+      }
+      links.forEach((a) => {
+        const on = a === byId.get(best);
+        a.classList.toggle("active", on);
+        if (on) a.setAttribute("aria-current", "location");
+        else a.removeAttribute("aria-current");
+      });
+    }, { threshold: [0, 0.15, 0.4, 0.7], rootMargin: "-64px 0px -35% 0px" });
+    byId.forEach((a, id2) => {
+      const el2 = document.getElementById(id2);
+      if (el2) spy.observe(el2);
+    });
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
+    const panels = document.querySelectorAll("main .panel");
+    const io2 = new IntersectionObserver((es2) => es2.forEach((e2) => {
+      if (e2.isIntersecting) {
+        e2.target.classList.add("in");
+        io2.unobserve(e2.target);
+      }
+    }), { rootMargin: "0px 0px -40px 0px" });
+    panels.forEach((p2) => {
+      p2.classList.add("reveal");
+      io2.observe(p2);
+    });
+  }
   function initFeatures() {
+    initNavAndReveal();
     onRenderNow(() => update3D2(false));
     new IntersectionObserver((es2, o) => {
       if (es2.some((x) => x.isIntersecting)) {

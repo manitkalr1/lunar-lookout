@@ -6,7 +6,7 @@ import { eph } from './ephemeris.js';
 import { demH, llToMap, mapToLL } from './terrain.js';
 import { sample, series, metrics, nextChange, scanLandingDays } from './analysis.js';
 import { fmtH, fmtUTC, fmtDate, fmtDur, esc } from './format.js';
-import { forecastLine, explainLine } from './forecast.js';
+import { forecastLine, explainLine, sunWord } from './forecast.js';
 import { NASA_ILLUM } from './nasamaps.js';
 
 const $ = id => document.getElementById(id);
@@ -146,7 +146,7 @@ function renderReadiness() {
   const calc = st.demLoading && inDem;   // smooth-Moon numbers are provisional while terrain loads
   $('verdict').className = 'verdict ' + v.lvl + (calc ? ' calc' : '');
   $('verdict').setAttribute('aria-busy', String(calc));
-  $('verdict').innerHTML = `<div class="score"><span class="score-n mono" title="Landing Site Score from 0 to 100: power survival (40) + communication (35) + sunlight (25)">${m.score.total}</span><span class="score-k">Landing Site Score${calc ? ' · calculating…' : ''}</span><span class="pill ${v.lvl}">${v.label}</span></div><ul>${v.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul>`;
+  $('verdict').innerHTML = `<div class="score"><span class="ring" style="--p:${m.score.total}" title="Landing Site Score from 0 to 100: power survival (40) + communication (35) + sunlight (25)"><span class="score-n mono">${m.score.total}</span></span><span class="score-k">Landing Site Score${calc ? ' · calculating…' : ''}</span><span class="pill ${v.lvl}">${v.label}</span></div><ul>${v.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul>`;
   $('scoreBars').classList.toggle('calc', calc);
   const sc0 = m.score;
   $('scoreBars').innerHTML = [['Power survival', sc0.power, 40, '--accent'], ['Communication', sc0.comms, 35, '--earth'], ['Sunlight', sc0.light, 25, '--sun']]
@@ -154,8 +154,10 @@ function renderReadiness() {
   const sc = nextChange(S, t, 'sun'), ec = nextChange(S, t, 'earth');
   sc.from = ec.from = t;
   $('forecast').className = 'forecast ' + v.lvl;
+  $('forecast').dataset.sky = sunWord(now.frac).state;   // sunny / partly / dark: drives the card's sky colours
   // Wrap only between the " · " parts so each phrase stays whole.
-  $('fcLine').innerHTML = forecastLine(now, sc, ec, v).split(' · ').map(p => `<span class="fc-part">${esc(p)}</span>`).join('<span class="fc-sep" aria-hidden="true"> · </span>');
+  const parts = forecastLine(now, sc, ec, v).split(' · ');
+  $('fcLine').innerHTML = parts.map((p, i) => `<span class="fc-part">${esc(p)}${i < parts.length - 1 ? '<span class="fc-sep" aria-hidden="true"> ·</span>' : ''}</span>`).join(' ');
   $('fcExplain').textContent = explainLine(now, sc, ec);
   const sunTxt = sc.ms ? `${sc.now ? 'Sunset' : 'Sunrise'} in ${fmtDur(sc.ms - t)}` : (sc.now ? 'No sunset within 120 days' : 'No sunrise within 120 days');
   const earTxt = ec.ms ? `${ec.now ? 'Earthset' : 'Earthrise'} in ${fmtDur(ec.ms - t)}` : (ec.now ? 'Stays in view 120+ days' : 'Not visible for 120+ days');

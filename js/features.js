@@ -296,7 +296,27 @@ async function load3D() {
 }
 export const onTimeChange = () => update3D(false);
 
+// Top bar: highlight the section in view. Panels: fade in once as they scroll into view.
+function initNavAndReveal() {
+  const links = [...document.querySelectorAll('.navlinks a')];
+  const byId = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const seen = new Map();
+  const spy = new IntersectionObserver(es => {
+    es.forEach(e => seen.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0));
+    let best = null, r = 0;
+    for (const [id, ratio] of seen) if (ratio > r) { r = ratio; best = id; }
+    links.forEach(a => { const on = a === byId.get(best); a.classList.toggle('active', on); if (on) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current'); });
+  }, { threshold: [0, 0.15, 0.4, 0.7], rootMargin: '-64px 0px -35% 0px' });
+  byId.forEach((a, id) => { const el = document.getElementById(id); if (el) spy.observe(el); });
+
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+  const panels = document.querySelectorAll('main .panel');
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -40px 0px' });
+  panels.forEach(p => { p.classList.add('reveal'); io.observe(p); });
+}
+
 export function initFeatures() {
+  initNavAndReveal();
   onRenderNow(() => update3D(false));
   new IntersectionObserver((es, o) => { if (es.some(x => x.isIntersecting)) { o.disconnect(); load3D(); } }, { rootMargin: '300px' }).observe($('view3dSec'));
   $('eyeSun').onclick = () => { load3D().then(() => v3?.landerEye('sun')); };

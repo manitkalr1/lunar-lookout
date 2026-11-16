@@ -6,6 +6,7 @@ import { demLL, llToMap, demH } from './terrain.js';
 import { renderAll, getMain, onRenderAll, onRenderNow } from './render.js';
 import { fmtDate, fmtUTC, fmtH, pad } from './format.js';
 import { shortForecast } from './forecast.js';
+import { horizonsChecks } from './horizons.js';
 
 const $ = id => document.getElementById(id);
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -117,9 +118,23 @@ function winKeys(e) {
 
 // ---------------------------------------------------------------- validation
 let validKey = null;
+let terrainRows = null;
+function horizonsRows() {
+  return horizonsChecks().map(h => [
+    h.label,
+    `az ${h.appAz.toFixed(2)}°, el ${h.appEl.toFixed(2)}°`,
+    `JPL Horizons: az ${h.az.toFixed(2)}°, el ${h.el.toFixed(2)}° (Δaz ${h.dAz >= 0 ? '+' : ''}${h.dAz.toFixed(3)}°, Δel ${h.dEl >= 0 ? '+' : ''}${h.dEl.toFixed(3)}°)`,
+    h.ok,
+  ]);
+}
+function drawValidation() {
+  const rows = [...horizonsRows(), ...(terrainRows || [])];
+  const wait = st.dem ? '' : `<tr><td colspan="4" class="sub">${st.demLoading ? 'Terrain checks run once the NASA LOLA terrain has loaded…' : 'Load LOLA terrain to run the terrain checks.'}</td></tr>`;
+  $('validTable').innerHTML = `<thead><tr><th>Check</th><th class="num">Lunar Lookout</th><th>Reference</th><th>Match</th></tr></thead><tbody>` +
+    rows.map(([k, v, ref, ok]) => `<tr><td>${k}</td><td class="num">${v}</td><td>${ref}</td><td>${ok ? '<span class="delta-up">✓ agrees</span>' : '<span class="delta-down">✕ check</span>'}</td></tr>`).join('') + wait + '</tbody>';
+}
 function scheduleValidation() {
-  const tbody = $('validTable');
-  if (!st.dem) { tbody.innerHTML = '<tbody><tr><td class="sub">Load LOLA terrain to run the checks.</td></tr></tbody>'; validKey = null; return; }
+  if (!st.dem) { terrainRows = null; validKey = null; drawValidation(); return; }
   if (validKey === st.dem.name) return;
   validKey = st.dem.name;
   setTimeout(() => {
@@ -142,8 +157,8 @@ function scheduleValidation() {
       ['Connecting ridge sunlight (1 yr)', `${ridge.sun.toFixed(0)}%`, '~80–90% (Mazarico et al. 2011, Icarus)', ridge.sun > 70 && ridge.sun < 95],
       ['Connecting ridge longest night', fmtH(ridge.longestDark), 'Days, not weeks (Mazarico et al. 2011)', ridge.longestDark < 10 * 24],
     ];
-    tbody.innerHTML = `<thead><tr><th>Check</th><th class="num">Lunar Lookout</th><th>Published science</th><th>Match</th></tr></thead><tbody>` +
-      rows.map(([k, v, ref, ok]) => `<tr><td>${k}</td><td class="num">${v}</td><td>${ref}</td><td>${ok ? '<span class="delta-up">✓ agrees</span>' : '<span class="delta-down">✕ check</span>'}</td></tr>`).join('') + '</tbody>';
+    terrainRows = rows;
+    drawValidation();
   }, 50);
 }
 

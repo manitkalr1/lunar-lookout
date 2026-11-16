@@ -83,6 +83,8 @@ These are one-year results from 1 Jan 2026, with a 2 m mast. Run `npm run test:r
 
 Shackleton depth from the DEM is 4.0 km (published value: ~4.2 km, Zuber et al. 2012).
 
+**JPL Horizons cross-check:** for the Sun at the connecting ridge (222.69°E, 89.45°S) at 00:00 UTC on 1 Jan 2027, NASA JPL Horizons gives azimuth 40.4333°, elevation 1.4326°. Lunar Lookout gives 40.4303° and 1.4340°, a difference of 0.003° in azimuth and 0.001° in elevation. The reference values and the exact query are in `js/horizons.js`, and the table in the app shows the comparison live.
+
 ## How it works
 
 | Step | Method | Code |

@@ -128,5 +128,12 @@ const latlon = v => { const n = Math.hypot(...v); return [Math.asin(v[2] / n) * 
   check('Short tooltip forecast', F.shortForecast({ frac: 1, eVis: true }, v) === '☀️ 🌍 GO');
 }
 
+// 8. JPL Horizons reference values (hard-coded from the Horizons API)
+{
+  const { horizonsChecks, TOL_AZ, TOL_EL } = await import('../js/horizons.js');
+  for (const h of horizonsChecks())
+    check(`${h.label}`, h.ok, `Δaz ${h.dAz.toFixed(4)}° (tol ${TOL_AZ}), Δel ${h.dEl.toFixed(4)}° (tol ${TOL_EL})`);
+}
+
 console.log(fails ? `\n${fails} check(s) failed` : '\nAll checks passed');
 process.exit(fails ? 1 : 0);

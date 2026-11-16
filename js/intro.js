@@ -88,7 +88,9 @@ function draw(now) {
   const lit = sun.el > (hz ? hzAt(hz, sun.az) : -0.09);
   caption.textContent = hz
     ? `Live: the real horizon at the connecting ridge from NASA LOLA terrain. ${fmtUTC(tSim)}, sped up about 40,000×. ${lit ? 'Sun up' : 'Sun behind the hills'} · ${earth.el > hzAt(hz, earth.az) ? 'Earth in view' : 'Earth hidden'}.`
-    : `Loading NASA terrain${st.demPct != null ? ` ${Math.round(st.demPct)}%` : ''}…`;
+    : st.fileMode && !st.demLoading
+      ? 'Opened from a file: choose the terrain file in the planner below to see the real horizon.'
+      : `Loading NASA terrain${st.demPct != null ? ` ${Math.round(st.demPct)}%` : ''}…`;
 }
 
 function loop(now) {

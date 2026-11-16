@@ -8,11 +8,13 @@
   "scripts": {
     "start": "python3 -m http.server 8000",
     "test": "node tests/verify.mjs",
-    "test:real": "node tests/real-data.mjs"
+    "test:real": "node tests/real-data.mjs",
+    "build": "node tools/build-local.mjs"
   },
   "devDependencies": {
     "astronomy-engine": "^2.1.19",
     "axe-core": "^4.10.2",
+    "esbuild": "^0.24.2",
     "three": "^0.170.0"
   },
   "private": true,

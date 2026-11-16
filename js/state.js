@@ -19,6 +19,7 @@ export const st = {
   compare: ['ridge', 'nobile1', 'malapert', 'mouton', 'shackfloor'],
   dem: null,         // loaded LOLA DEM, see terrain.js
   demLoading: false, // true while the bundled DEM downloads
+  fileMode: typeof location !== 'undefined' && location.protocol === 'file:', // opened by double-clicking index.html
   playing: false,
   mapRad: 220,       // lighting map half-width, km (wide enough for all nine Artemis regions)
 };

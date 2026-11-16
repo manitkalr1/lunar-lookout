@@ -235,3 +235,6 @@ details.settings > summary { cursor:pointer; font-weight:600; font-size:14px; co
 details.settings > summary .sub { font-weight:400; margin-left:8px }
 details.settings[open] > summary { margin-bottom:10px }
 @media (max-width:640px) { details.settings > summary .sub { display:block; margin:2px 0 0 } }
+
+.banner-btn { margin:6px 6px 0 0; padding:4px 10px; font-size:13px; font-weight:600; border-color:var(--warn) }
+.banner-hint { display:block; margin-top:4px; font-weight:400; font-size:12.5px; color:var(--ink-2) }

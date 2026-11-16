@@ -135,5 +135,13 @@ const latlon = v => { const n = Math.hypot(...v); return [Math.asin(v[2] / n) * 
     check(`${h.label}`, h.ok, `Δaz ${h.dAz.toFixed(4)}° (tol ${TOL_AZ}), Δel ${h.dEl.toFixed(4)}° (tol ${TOL_EL})`);
 }
 
+// 9. The single-file build used when index.html is opened from disk is up to date.
+{
+  const { buildBundle } = await import('../tools/build-local.mjs');
+  const { readFileSync } = await import('node:fs');
+  let committed = ''; try { committed = readFileSync(new URL('../dist/lunar-lookout.js', import.meta.url), 'utf8'); } catch (e) { /* missing */ }
+  check('dist/lunar-lookout.js matches the current source (run `npm run build` if not)', committed === await buildBundle());
+}
+
 console.log(fails ? `\n${fails} check(s) failed` : '\nAll checks passed');
 process.exit(fails ? 1 : 0);

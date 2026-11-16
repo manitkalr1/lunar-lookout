@@ -266,6 +266,15 @@
 <div class="tip" id="tip"></div>
 
 <script src="vendor/astronomy.browser.min.js"></script>
-<script type="module" src="js/main.js"></script>
+<script>
+  // On the web, load the app's ES modules. Opened by double-clicking (file://),
+  // browsers block modules, so load the single-file build in dist/ instead.
+  (function () {
+    var s = document.createElement('script');
+    if (location.protocol === 'file:') s.src = 'dist/lunar-lookout.js';
+    else { s.type = 'module'; s.src = 'js/main.js'; }
+    document.body.appendChild(s);
+  })();
+</script>
 </body>
 </html>

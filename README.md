@@ -76,15 +76,19 @@ The power model uses a vertical solar array that turns to face the Sun (the usua
 
 ## Run it
 
-It's a static site with no build step. Browsers block ES modules on `file://`, so serve the folder:
+**Easiest:** open the [live app](https://manitkalr1.github.io/lunar-lookout/). It works on any device with a modern browser.
+
+**From a copy of this repo, with no setup:** double-click `index.html`. Browsers block multi-file web apps opened from disk, so the page automatically switches to a single-file build of the same code (`dist/lunar-lookout.js`). Browsers also won't let a local page read the terrain file by itself, so the app asks you once to choose `data/LDEM_75S_240M.IMG` from the app folder. After that it remembers the file.
+
+**From a copy, like the live site (no prompt):** serve the folder, then open http://localhost:8000.
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Then open http://localhost:8000.
+**Deploying:** push to GitHub, then go to **Settings → Pages**, choose the `main` branch and the `/ (root)` folder, and click **Save**.
 
-To deploy, push to GitHub, then go to **Settings → Pages**, choose the `main` branch and the `/ (root)` folder, and click **Save**.
+**After editing anything in `js/`:** run `npm run build` to refresh the single-file build. `npm test` fails if you forget.
 
 ## Real NASA terrain (built in)
 

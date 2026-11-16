@@ -133,9 +133,14 @@ function renderReadiness() {
   // Never show smooth-Moon numbers for a south-pole site without saying so.
   const banner = $('terrainBanner'), inDem = S.site.lat <= -75.3;
   banner.hidden = !!st.dem || !inDem;
-  if (!banner.hidden) banner.textContent = st.demLoading
-    ? 'Real terrain still loading — results below assume a smooth Moon and will change.'
-    : 'Real terrain did not load — results below assume a smooth Moon. Reload the page to try again.';
+  if (!banner.hidden) {
+    if (st.fileMode && !st.demLoading) {
+      banner.innerHTML = 'You opened the app from a file, so the browser won\'t load NASA terrain by itself. Results below assume a smooth Moon. <button type="button" class="banner-btn" id="pickDem">Choose the terrain file</button> <span class="banner-hint">It\'s <span class="mono">data/LDEM_75S_240M.IMG</span> in the app folder. You only need to do this once.</span>';
+      $('pickDem').onclick = () => $('demFile').click();
+    } else banner.textContent = st.demLoading
+      ? 'Real terrain still loading — results below assume a smooth Moon and will change.'
+      : 'Real terrain did not load — results below assume a smooth Moon. Reload the page to try again.';
+  }
   const v = m.verdict;
   const calc = st.demLoading && inDem;   // smooth-Moon numbers are provisional while terrain loads
   $('verdict').className = 'verdict ' + v.lvl + (calc ? ' calc' : '');

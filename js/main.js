@@ -179,6 +179,13 @@ async function loadInitialTerrain() {
     if (r.ok) { setDemStatus(r.message, 'ok'); return renderAll(); }
     await deleteDEM();               // stale or corrupt copy: drop it and download fresh
   }
+  if (st.fileMode) {
+    // Browsers do not let a page opened from a file read other files by itself.
+    // Ask once; the choice is cached in this browser (IndexedDB) for next time.
+    setDemStatus('Opened from a file on this computer, so the browser will not load the terrain by itself. Choose data/LDEM_75S_240M.IMG from the app folder below (only needed once).', 'off');
+    renderAll();
+    return;
+  }
   const prog = $('demProg');
   const onProgress = pct => {
     prog.hidden = false; prog.value = pct / 100;

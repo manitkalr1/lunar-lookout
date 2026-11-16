@@ -361,3 +361,49 @@ footer a { color:var(--muted) }
 /* Panels fade up once as they scroll into view (skipped with reduced motion) */
 .reveal { opacity:0; transform:translateY(14px); transition:opacity .45s ease, transform .45s ease }
 .reveal.in { opacity:1; transform:none }
+
+/* ---------- Mission advisor chat ---------- */
+.chat-launch { position:fixed; right:16px; bottom:16px; z-index:18; display:flex; align-items:center; gap:8px; padding:11px 18px; font-weight:600;
+  background:var(--sun); border-color:var(--sun); color:#1a1205; box-shadow:0 10px 30px rgba(0,0,0,.45) }
+.chat-launch:hover:not(:disabled) { background:#ffc86e; border-color:#ffc86e; color:#1a1205 }
+.chat-launch[aria-expanded="true"] { display:none }
+.chat-ic { width:18px; height:18px; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1205' stroke-width='2.2' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v11H9l-5 4z'/%3E%3C/svg%3E") center/contain no-repeat }
+.tour:not([hidden]) ~ .chat-launch { display:none }
+.chat { position:fixed; right:16px; bottom:16px; z-index:22; width:min(400px, calc(100vw - 32px)); height:min(620px, calc(100svh - 96px));
+  display:flex; flex-direction:column; border:1px solid var(--line); border-radius:16px; overflow:hidden;
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0) 140px), var(--panel); box-shadow:0 24px 70px rgba(0,0,0,.6) }
+.chat[hidden] { display:none }
+.chat-head { display:flex; align-items:center; gap:6px; padding:12px 12px 10px 16px; border-bottom:1px solid var(--line) }
+.chat-title { flex:1; display:grid; line-height:1.25 }
+.chat-title strong { font:600 16px/1.2 var(--font-display) }
+.chat-title .sub { font-size:12px }
+.chat-log { flex:1; overflow-y:auto; padding:14px 14px 6px; display:flex; flex-direction:column; gap:10px; overscroll-behavior:contain }
+.msg { max-width:88%; padding:9px 12px; border-radius:14px; font-size:14px; line-height:1.5 }
+.msg p { margin:0 } .msg p + p, .msg ul + p, .msg p + ul { margin-top:6px }
+.msg ul { margin:4px 0 0; padding-left:18px }
+.msg code { font-family:var(--font-mono); font-size:12.5px }
+.msg.user { align-self:flex-end; background:rgba(255,181,71,.16); border:1px solid rgba(255,181,71,.35); border-bottom-right-radius:4px }
+.msg.model { align-self:flex-start; background:var(--panel-2); border:1px solid var(--line); border-bottom-left-radius:4px }
+.msg.error { border-color:var(--bad); background:color-mix(in srgb, var(--bad) 12%, var(--panel-2)) }
+.typing { display:flex; gap:4px; padding:4px 0 }
+.typing span { width:7px; height:7px; border-radius:50%; background:var(--muted); animation:blink 1.2s infinite both }
+.typing span:nth-child(2) { animation-delay:.2s } .typing span:nth-child(3) { animation-delay:.4s }
+@keyframes blink { 0%, 80%, 100% { opacity:.25 } 40% { opacity:1 } }
+@media (prefers-reduced-motion: reduce) { .typing span { animation:none; opacity:.6 } }
+.chat-sugg { display:flex; flex-wrap:wrap; gap:6px; padding:4px 14px 8px }
+.chat-sugg[hidden] { display:none }
+.sugg { font-size:12.5px; padding:5px 10px }
+.chat-setup { padding:10px 16px 6px; font-size:13.5px; color:var(--ink-2) }
+.chat-setup[hidden] { display:none }
+.chat-setup p { margin:0 0 8px }
+.chat-keyform { display:flex; gap:8px; align-items:end; flex-wrap:wrap; margin-bottom:8px }
+.chat-keyform .field { flex:1 1 200px }
+.chat-keyform input { width:100% }
+.chat-form { display:flex; gap:8px; align-items:flex-end; padding:8px 12px; border-top:1px solid var(--line) }
+.chat-form[hidden] { display:none }
+.chat-form textarea { flex:1; resize:none; font:inherit; font-size:14px; color:var(--ink); background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:8px 10px; max-height:120px }
+.chat-note { margin:0; padding:0 14px 10px; font-size:11.5px; color:var(--muted) }
+@media (max-width:520px) {
+  .chat { right:0; left:0; bottom:0; width:100%; height:min(80svh, 640px); border-radius:16px 16px 0 0 }
+  .chat-launch { right:12px; bottom:12px; padding:10px 14px }
+}

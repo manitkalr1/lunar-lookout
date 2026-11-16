@@ -69,6 +69,34 @@
     <div class="btnrow"><button id="tourBack">Back</button><button id="tourNext" class="primary">Next</button><button id="tourClose" class="x" aria-label="Close tour">✕ Close</button></div>
   </div>
 
+  <button id="chatLaunch" class="chat-launch" type="button" aria-expanded="false" aria-controls="chatPanel"><span class="chat-ic" aria-hidden="true"></span>Ask the advisor</button>
+  <aside id="chatPanel" class="chat" aria-label="Mission advisor chat" hidden>
+    <div class="chat-head">
+      <div class="chat-title"><strong>Mission advisor</strong><span class="sub" id="chatMode">Powered by Gemini</span></div>
+      <button id="chatKeyBtn" class="x" type="button" hidden>Change key</button>
+      <button id="chatClose" class="x" type="button" aria-label="Close chat">✕</button>
+    </div>
+    <div class="chat-log" id="chatLog" aria-live="polite" tabindex="0" role="log" aria-label="Conversation">
+      <div class="msg model"><p>Hi! Ask me anything about the site and dates you have picked. I can see the forecast, the score, the battery simulation and the checks, and I'll answer with the app's own numbers.</p></div>
+    </div>
+    <div class="chat-sugg" id="chatSugg"></div>
+    <div class="chat-setup" id="chatSetup" hidden>
+      <p>To chat, paste a Gemini API key. It is kept only in this browser and sent only to Google.</p>
+      <form id="chatKeyForm" class="chat-keyform">
+        <label class="field" for="chatKeyIn">Gemini API key
+          <input id="chatKeyIn" type="password" autocomplete="off" spellcheck="false"></label>
+        <button class="primary" type="submit">Save key</button>
+      </form>
+      <p class="sub">You can get a free key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.</p>
+    </div>
+    <form class="chat-form" id="chatForm" hidden>
+      <label class="sr-only" for="chatInput">Your question</label>
+      <textarea id="chatInput" rows="2" maxlength="1000" placeholder="Ask about this landing…"></textarea>
+      <button id="chatSend" class="primary" type="submit">Send</button>
+    </form>
+    <p class="chat-note">AI answers can be wrong. Check important numbers in the app.</p>
+  </aside>
+
   <section class="panel" id="scenario" aria-labelledby="planTitle">
     <div class="panel-head"><h2 id="planTitle">Plan a landing</h2><span class="sub">All times UTC</span></div>
     <div class="controls">

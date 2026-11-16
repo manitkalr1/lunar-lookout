@@ -39,6 +39,7 @@ NASA's Artemis astronauts and many robotic landers are heading to the lunar sout
 - **"How we know it's right"**: checks the app's results against published science, computed live in the browser
 - **Share links and CSV export**: send a colleague the exact scenario, or export hourly Sun and Earth data for analysis
 - **Explain mode**: plain-language notes for students and the public
+- **Mission advisor (AI chat, Gemini)**: ask questions about what's on screen ("Why is this a NO-GO?", "Which Artemis region is best right now?"). Every question carries a snapshot of the app's current numbers, so answers use the app's own results
 
 ### Landing window finder
 
@@ -63,6 +64,17 @@ NASA named nine candidate landing regions for Artemis on 28 October 2024, publis
 | Nobile Rim 2 | 84.043°S, 59.286°E | 52.0% | 71.6% |
 | Mons Mouton Plateau | 84.279°S, 29.918°E | 51.7% | 100.0% |
 | de Gerlache Rim 2 | 88.310°S, 62.095°W | 42.9% | 49.8% |
+
+## Mission advisor (AI chat)
+
+The **Ask the advisor** button opens a chat powered by Google Gemini (`gemini-3.8-flash`). With each question the app sends a compact snapshot of what you're looking at: the site, dates, forecast, score breakdown, battery simulation, best landing days, and NASA's long-term values. The advisor answers with those numbers and says when something isn't in them. Replies are shown as plain text with basic formatting, never as raw HTML. Code: `js/chat.js`.
+
+The site is public, so it never contains an API key. There are two ways to connect:
+
+- **For everyone, recommended:** deploy the small Cloudflare Worker in [`worker/`](worker/README.md). It holds your Gemini key as a secret, accepts only this site, caps message sizes and rate-limits. Then set `CHAT_PROXY_URL` in `js/config.js`.
+- **Without the Worker:** the advisor asks each visitor for their own Gemini API key, kept only in their browser.
+
+AI answers can be wrong, and the panel says so.
 
 ## Landing Site Score
 
@@ -162,6 +174,7 @@ The tests check:
 - the power model (the battery lasts exactly capacity ÷ load hours; a 14-day equatorial night drains it)
 - on the real LOLA data: Shackleton depth, Malapert height, permanently shadowed crater floors, ridge illumination and night length, all against published values
 - against NASA's 18.6-year illumination and Earth-visibility maps at 15 sites, and four JPL Horizons positions
+- the Mission advisor and its Worker with Gemini mocked: request format, reply parsing, HTML escaping, error messages, key never sent from the browser in proxy mode, site-only access, size limits and rate limiting
 
 ## Data sources
 

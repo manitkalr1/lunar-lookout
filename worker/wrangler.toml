@@ -1,0 +1,11 @@
+# Cloudflare Worker for the Lunar Lookout Mission advisor. See README.md in this folder.
+name = "lunar-lookout-advisor"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+
+[vars]
+# Sites allowed to use the advisor ("null" = index.html opened from a downloaded copy).
+ALLOWED_ORIGINS = "https://manitkalr1.github.io,null,http://localhost:8000"
+GEMINI_MODEL = "gemini-3.8-flash"
+RATE_LIMIT_PER_10_MIN = "20"
+# The API key is NOT here. Add it as a secret: npx wrangler secret put GEMINI_API_KEY

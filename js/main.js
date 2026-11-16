@@ -3,7 +3,8 @@ import { HOUR, st } from './state.js';
 import { SITES, CUSTOM, siteById } from './sites.js';
 import { loadDEM, cacheDEM, restoreDEM, deleteDEM, clearHorizonCache, mapToLL } from './terrain.js';
 import { renderAll, renderNow, renderCompare, renderMap, findBest } from './render.js';
-import { initFeatures, applyHash } from './features.js';
+import { initFeatures, applyHash, getWindowsSummary } from './features.js';
+import { initChat } from './chat.js';
 import { initIntro } from './intro.js';
 
 const $ = id => document.getElementById(id);
@@ -128,6 +129,7 @@ function init() {
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', renderAll);
 
   initFeatures();
+  initChat({ getWindowsSummary });
 
   // Title screen: start, quick-jump buttons, and skip it for shared links.
   const toPlanner = (focus) => {

@@ -143,5 +143,60 @@ const latlon = v => { const n = Math.hypot(...v); return [Math.asin(v[2] / n) * 
   check('dist/lunar-lookout.js matches the current source (run `npm run build` if not)', committed === await buildBundle());
 }
 
+// 10. Mission advisor (Gemini chatbot): request shape, reply parsing, safety, errors
+{
+  const C = await import('../js/chat.js');
+  const ctx = { site: { name: 'Test site' }, missionResults: { call: 'GO' } };
+  const req = C.buildRequest([{ role: 'user', text: 'Why GO?' }], ctx);
+  check('Chat request carries the system prompt and the current app state', req.systemInstruction.parts[0].text.includes('Mission advisor') && req.systemInstruction.parts[0].text.includes('"Test site"'));
+  check('Chat request uses Gemini roles and caps output', req.contents[0].role === 'user' && req.contents[0].parts[0].text === 'Why GO?' && req.generationConfig.maxOutputTokens === 1024);
+  const long = Array.from({ length: 30 }, (_, i) => ({ role: i % 2 ? 'model' : 'user', text: 'm' + i }));
+  check('Chat history is trimmed to the last 12 turns', C.buildRequest(long, ctx).contents.length === 12);
+  check('Reads a normal Gemini reply', C.readReply({ candidates: [{ content: { parts: [{ text: 'Hello ' }, { text: 'Moon' }] }, finishReason: 'STOP' }] }).text === 'Hello Moon');
+  check('Skips Gemini thought parts', C.readReply({ candidates: [{ content: { parts: [{ text: 'hidden', thought: true }, { text: 'shown' }] } }] }).text === 'shown');
+  check('Explains a blocked prompt', /declined/.test(C.readReply({ promptFeedback: { blockReason: 'SAFETY' } }).error));
+  check('Explains a safety stop with no text', /SAFETY/.test(C.readReply({ candidates: [{ finishReason: 'SAFETY' }] }).error));
+  const html = C.formatReply('**Bold** and <script>alert(1)</script>\n- item <img src=x onerror=alert(1)>');
+  check('Reply formatting escapes HTML (no script injection)', !/<script|<img/.test(html) && html.includes('<strong>Bold</strong>') && html.includes('<li>'));
+  const fakeFetch = (status, body) => async (url, opts) => ({ ok: status < 400, status, json: async () => body, _url: url, _opts: opts });
+  let seen;
+  const spy = async (url, opts) => { seen = { url, opts }; return { ok: true, status: 200, json: async () => ({ candidates: [{ content: { parts: [{ text: 'ok' }] } }] }) }; };
+  const r1 = await C.ask([{ role: 'user', text: 'hi' }], ctx, { fetchImpl: spy, proxyUrl: '', key: 'TESTKEY', model: 'gemini-3.8-flash' });
+  check('Own-key mode calls Gemini generateContent with the key', r1.text === 'ok' && seen.url.startsWith('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=TESTKEY'));
+  await C.ask([{ role: 'user', text: 'hi' }], ctx, { fetchImpl: spy, proxyUrl: 'https://proxy.example/chat', key: 'TESTKEY' });
+  check('Proxy mode never sends the key from the browser', seen.url === 'https://proxy.example/chat' && !JSON.stringify(seen.opts).includes('TESTKEY'));
+  check('Bad key gives a clear message', /not accepted/.test((await C.ask([{ role: 'user', text: 'hi' }], ctx, { fetchImpl: fakeFetch(400, { error: { message: 'API key not valid. Please pass a valid API key.' } }), proxyUrl: '', key: 'x' })).error));
+  check('Quota limit gives a clear message', /Too many/.test((await C.ask([{ role: 'user', text: 'hi' }], ctx, { fetchImpl: fakeFetch(429, {}), proxyUrl: '', key: 'x' })).error));
+  check('Network failure gives a clear message', /Could not reach/.test((await C.ask([{ role: 'user', text: 'hi' }], ctx, { fetchImpl: async () => { throw new TypeError('fail'); }, proxyUrl: '', key: 'x' })).error));
+  check('No key and no proxy asks for setup', /No Gemini connection/.test((await C.ask([{ role: 'user', text: 'hi' }], ctx, { proxyUrl: '', key: '' })).error));
+}
+
+// 11. Mission advisor proxy (Cloudflare Worker), with Gemini mocked
+{
+  const W = (await import('../worker/src/index.js')).default;
+  const env = { GEMINI_API_KEY: 'SECRET-KEY', ALLOWED_ORIGINS: 'https://manitkalr1.github.io,null' };
+  const realFetch = globalThis.fetch; let upstream;
+  globalThis.fetch = async (url, opts) => { upstream = { url, opts }; return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: 'from gemini' }] } }] }), { status: 200 }); };
+  const good = { systemInstruction: { parts: [{ text: 'sys' }] }, contents: [{ role: 'user', parts: [{ text: 'hi' }] }], generationConfig: { maxOutputTokens: 999999, temperature: 2 } };
+  const call = (origin, body, extra = {}) => W.fetch(new Request('https://w.example/chat', { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', 'CF-Connecting-IP': extra.ip || '1.2.3.4' }, body: JSON.stringify(body) }), extra.env || env);
+  try {
+    const ok = await call('https://manitkalr1.github.io', good);
+    const okJson = await ok.json();
+    const sent = JSON.parse(upstream.opts.body);
+    check('Worker forwards to Gemini with the secret key in a header', ok.status === 200 && okJson.candidates[0].content.parts[0].text === 'from gemini' && upstream.opts.headers['x-goog-api-key'] === 'SECRET-KEY' && !upstream.url.includes('SECRET'));
+    check('Worker fixes output length and temperature (caller cannot raise them)', sent.generationConfig.maxOutputTokens === 1024 && sent.generationConfig.temperature === 0.4);
+    check('Worker sends CORS for the Lunar Lookout site', ok.headers.get('Access-Control-Allow-Origin') === 'https://manitkalr1.github.io');
+    check('Worker refuses other websites', (await call('https://evil.example', good)).status === 403);
+    check('Worker allows a downloaded copy (file://, Origin null)', (await call('null', good, { ip: '5.5.5.5' })).status === 200);
+    check('Worker rejects oversized messages', (await call('https://manitkalr1.github.io', { ...good, contents: [{ role: 'user', parts: [{ text: 'x'.repeat(5000) }] }] }, { ip: '6.6.6.6' })).status === 400);
+    check('Worker rejects a conversation that does not end with a question', (await call('https://manitkalr1.github.io', { ...good, contents: [{ role: 'model', parts: [{ text: 'hi' }] }] }, { ip: '7.7.7.7' })).status === 400);
+    check('Worker explains a missing key secret', (await (await call('https://manitkalr1.github.io', good, { env: { ALLOWED_ORIGINS: env.ALLOWED_ORIGINS }, ip: '8.8.8.8' })).json()).lunarLookoutError.includes('GEMINI_API_KEY'));
+    let last; for (let i = 0; i < 21; i++) last = await call('https://manitkalr1.github.io', good, { ip: '9.9.9.9' });
+    check('Worker rate-limits one connection (20 per 10 minutes)', last.status === 429);
+    const pre = await W.fetch(new Request('https://w.example/chat', { method: 'OPTIONS', headers: { Origin: 'https://manitkalr1.github.io' } }), env);
+    check('Worker answers the browser preflight', pre.status === 204 && pre.headers.get('Access-Control-Allow-Methods').includes('POST'));
+  } finally { globalThis.fetch = realFetch; }
+}
+
 console.log(fails ? `\n${fails} check(s) failed` : '\nAll checks passed');
 process.exit(fails ? 1 : 0);

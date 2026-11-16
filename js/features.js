@@ -119,6 +119,26 @@ function winKeys(e) {
   }
 }
 
+/** Compact summary of the landing-days heatmap, for the chatbot. */
+export function getWindowsSummary() {
+  if (!win) return null;
+  const day = i => new Date(win.base + i * DAY).toISOString().slice(0, 10);
+  return {
+    firstLandingDay: day(0), days: WIN_DAYS,
+    rows: win.rows.map(r => {
+      const c = r.cells;
+      if (c.length < WIN_DAYS) return { site: r.site.name, status: 'still computing' };
+      let best = 0; c.forEach((x, i) => { if (x.m.score.total > c[best].m.score.total) best = i; });
+      const firstGo = c.findIndex(x => x.m.verdict.lvl === 'go');
+      return {
+        site: r.site.name, goDays: c.filter(x => x.m.verdict.lvl === 'go').length,
+        cautionDays: c.filter(x => x.m.verdict.lvl === 'caution').length,
+        firstGoDay: firstGo >= 0 ? day(firstGo) : null, bestDay: day(best), bestScore: c[best].m.score.total,
+      };
+    }),
+  };
+}
+
 // ---------------------------------------------------------------- validation
 let validKey = null;
 let terrainRows = null, nasaRows = null;

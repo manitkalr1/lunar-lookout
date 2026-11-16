@@ -29,9 +29,7 @@
 html, body { margin:0 }
 body { background:var(--bg); color:var(--ink); font:15px/1.5 var(--font-body) }
 .wrap { max-width:1280px; margin:0 auto; padding:16px; display:grid; gap:16px }
-header { display:flex; flex-wrap:wrap; gap:12px 24px; align-items:end; justify-content:space-between }
 h1 { font:700 30px/1.1 var(--font-display); margin:0; letter-spacing:.01em; text-wrap:balance }
-h1 small { display:block; font:500 14px/1.4 var(--font-body); color:var(--ink-2); letter-spacing:0; margin-top:4px }
 h2 { font:600 18px/1.2 var(--font-display); margin:0; text-wrap:balance }
 .chip { display:inline-flex; align-items:center; gap:8px; padding:5px 10px; border-radius:999px; border:1px solid var(--line); background:var(--panel); font-size:13px; color:var(--ink-2) }
 .dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex:none }
@@ -89,15 +87,6 @@ footer { font-size:12.5px; color:var(--muted); max-width:90ch }
 .x.link:hover { text-decoration:underline }
 @media (prefers-reduced-motion: reduce) { .tip { transition:none } }
 
-/* Mission brief */
-.brief { display:grid; grid-template-columns:minmax(0,1fr) 260px; gap:16px 24px; align-items:start }
-@media (max-width:900px) { .brief { grid-template-columns:1fr } }
-.brief h2 { margin-bottom:6px }
-.brief p { margin:0 0 10px; max-width:75ch; color:var(--ink-2) }
-.t-sun { color:var(--sun-ink) } .t-earth { color:var(--earth-ink) }
-.brief-facts { list-style:none; margin:0; padding:0; display:grid; gap:8px }
-.brief-facts li { border:1px solid var(--line); border-radius:8px; padding:8px 12px; font-size:13px; color:var(--ink-2) }
-.brief-facts .big { display:block; font:600 24px/1.2 var(--font-mono); color:var(--ink) }
 /* Guided tour */
 .tour { position:fixed; right:16px; bottom:16px; z-index:20; width:min(380px, calc(100vw - 32px)); background:var(--panel); border:1px solid var(--accent); border-radius:10px; padding:14px; box-shadow:0 8px 30px rgba(0,0,0,.25) }
 .tour[hidden] { display:none }
@@ -145,9 +134,6 @@ input[aria-invalid="true"] { border-color:var(--bad) }
 .fc-explain { margin:6px 0 0; padding:0; border:0; background:none; font-size:14px }
 
 /* NASA data credit */
-.credit { margin:6px 0 0; font-size:13px; color:var(--ink-2) }
-.credit a { color:var(--ink-2); text-decoration:underline; text-underline-offset:2px }
-.credit a:hover { color:var(--accent) }
 /* Bigger, colour-coded verdict (label text stays, so colour is never the only signal) */
 .verdict.go { background:color-mix(in srgb, var(--good) 10%, transparent) }
 .verdict.caution { background:color-mix(in srgb, var(--warn) 10%, transparent) }
@@ -156,18 +142,6 @@ input[aria-invalid="true"] { border-color:var(--bad) }
 #verdict .score { grid-template-columns:auto auto; column-gap:14px; row-gap:6px }
 #verdict .score-n { font-size:46px }
 
-/* Collapsible brief: two lines until "Read more" */
-.brief { grid-template-areas:"text facts" "actions facts" }
-.brief-text { grid-area:text } .brief-facts { grid-area:facts } .brief-actions { grid-area:actions }
-@media (max-width:900px) { .brief { grid-template-areas:"text" "facts" "actions" } }
-.brief.collapsed { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"text actions"; align-items:center; column-gap:20px }
-@media (max-width:900px) { .brief.collapsed { grid-template-columns:1fr; grid-template-areas:"text" "actions"; row-gap:8px } }
-.brief.collapsed .brief-facts { display:none }
-.brief.collapsed .brief-text p:first-of-type { display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin:0 }
-.brief.collapsed .brief-text p ~ p { display:none }
-.brief.collapsed h2 { margin-bottom:4px }
-.brief-actions { align-self:end }
-.brief.collapsed .brief-actions { align-self:center }
 
 /* Provisional numbers while terrain loads */
 .verdict.calc .score-n, .verdict.calc .pill, .verdict.calc ul, .sbars.calc { opacity:.4; filter:grayscale(1) }
@@ -202,3 +176,61 @@ table.res td { vertical-align:top }
 .tag-checking { background:color-mix(in srgb, var(--sun) 16%, transparent); border-color:color-mix(in srgb, var(--sun) 50%, var(--line)) }
 
 .nasa-note { margin:8px 0 0; font-size:12.5px }
+
+/* ---------- Title screen (always dark: it is the lunar sky) ---------- */
+.intro { position:relative; min-height:100svh; display:grid; align-items:center; overflow:hidden; color:#eef2f6; background:#02040a; isolation:isolate }
+.intro canvas { position:absolute; inset:0; width:100%; height:100%; z-index:-1; display:block }
+.intro::after { content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(90deg, rgba(2,4,10,.82) 0%, rgba(2,4,10,.55) 45%, rgba(2,4,10,0) 75%) }
+.intro-inner { width:100%; max-width:1280px; margin:0 auto; padding:72px 24px 120px; display:grid; gap:18px; justify-items:start }
+.eyebrow { margin:0; font:500 13px/1.4 var(--font-mono); letter-spacing:.04em; color:#aab6c4 }
+.intro h1 { font:700 clamp(44px, 8vw, 96px)/0.95 var(--font-display); letter-spacing:-.01em; margin:0; color:#fff }
+.lede { margin:0; max-width:56ch; font-size:clamp(16px, 1.6vw, 19px); line-height:1.55; color:#d5dde6 }
+.intro-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:6px }
+button.big { font-size:16px; padding:11px 20px; border-radius:8px; font-weight:600 }
+.intro button.primary { background:#f2a93b; border-color:#f2a93b; color:#14100a }
+.intro button.primary:hover:not(:disabled) { background:#ffc062; border-color:#ffc062 }
+button.ghost { background:rgba(255,255,255,.06); color:#eef2f6; border-color:rgba(255,255,255,.35) }
+button.ghost:hover:not(:disabled) { background:rgba(255,255,255,.14); border-color:#fff }
+.quick { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:4px }
+.quick-k { font-size:13px; color:#aab6c4; margin-right:2px }
+.quick-b { background:rgba(10,14,22,.6); color:#eef2f6; border:1px solid rgba(255,255,255,.22); border-radius:999px; padding:6px 12px; font-size:13.5px }
+.quick-b small { color:#aab6c4; font-size:12px; margin-left:4px }
+.quick-b:hover:not(:disabled) { background:rgba(255,255,255,.12); border-color:#fff }
+.intro .credit { margin:10px 0 0; font-size:13px; color:#aab6c4 }
+.intro .credit a { color:#d5dde6; text-decoration:underline; text-underline-offset:2px }
+.intro .credit a:hover { color:#fff }
+.intro-caption { position:absolute; left:0; right:0; bottom:0; margin:0 auto; max-width:1280px; padding:0 24px 18px; font:12px/1.4 var(--font-mono); color:#93a1b1 }
+.intro :focus-visible { outline-color:#f2a93b }
+@media (max-width:640px) {
+  .intro::after { background:linear-gradient(180deg, rgba(2,4,10,.9) 0%, rgba(2,4,10,.82) 62%, rgba(2,4,10,.35) 100%) }
+  .intro-inner { padding:48px 16px 110px }
+  .intro-caption { padding:0 16px 14px }
+}
+
+/* ---------- Sticky section bar ---------- */
+.topbar { position:sticky; top:0; z-index:15; display:flex; align-items:center; gap:8px 18px; padding:8px max(16px, calc((100% - 1248px) / 2)); background:color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter:blur(8px); border-bottom:1px solid var(--line) }
+.brand { font:700 17px/1 var(--font-display); color:var(--ink); text-decoration:none; white-space:nowrap }
+.navlinks { display:flex; gap:2px; overflow-x:auto; scrollbar-width:none; flex:1 1 auto; min-width:0 }
+.navlinks::-webkit-scrollbar { display:none }
+.navlinks a { color:var(--ink-2); text-decoration:none; font-size:14px; padding:6px 9px; border-radius:6px; white-space:nowrap }
+.navlinks a:hover { background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--ink) }
+.navright { display:flex; align-items:center; gap:8px; flex:none }
+.navright button { padding:5px 10px; font-size:13px }
+@media (max-width:760px) {
+  .topbar { flex-wrap:wrap; padding:6px 16px }
+  .navlinks { order:3; flex-basis:100% }
+  .navright .chip span:last-child { font-size:12px }
+}
+section[id], .panel[id] { scroll-margin-top:64px }
+@media (max-width:760px) { section[id], .panel[id] { scroll-margin-top:104px } }
+
+/* ---------- Planner ---------- */
+.controls .field.grow { flex:1 1 320px }
+.controls .field.grow select { width:100% }
+.plan-actions { margin-left:auto }
+@media (max-width:760px) { .plan-actions { margin-left:0 } }
+details.settings { margin-top:12px; border-top:1px solid var(--line); padding-top:10px }
+details.settings > summary { cursor:pointer; font-weight:600; font-size:14px; color:var(--ink); list-style-position:outside }
+details.settings > summary .sub { font-weight:400; margin-left:8px }
+details.settings[open] > summary { margin-bottom:10px }
+@media (max-width:640px) { details.settings > summary .sub { display:block; margin:2px 0 0 } }

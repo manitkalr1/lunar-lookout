@@ -10,12 +10,14 @@
 
 Will your lander have power and a line to Earth? Pick any site and date at the lunar south pole. Lunar Lookout shows where the **Sun** (power) and **Earth** (direct radio contact) sit above the site's *real* terrain horizon, built from NASA LRO LOLA laser-altimeter data. It then flies the mission hour by hour and gives the landing a **Landing Site Score from 0 to 100**.
 
+![Lunar Lookout title screen: the real horizon of the connecting ridge from NASA LOLA terrain, with the Sun on its true path](docs/title.png)
+
 ![Lunar Lookout: sky above the connecting ridge and mission readiness](docs/hero.png)
 
 ## For judges: try it in 60 seconds
 
-1. Open the [live app](https://manitkalr1.github.io/lunar-lookout/). NASA terrain loads automatically, and the green **Terrain: LOLA 240 m** chip confirms it.
-2. Click **Take the 60-second tour**. It walks through the problem, the sky view, the GO call, launch slips, the landing window finder, the ice-filled crater, the 3D view and the validation.
+1. Open the [live app](https://manitkalr1.github.io/lunar-lookout/). The title screen shows the real horizon of one south-pole site, built from NASA LOLA terrain, with the Sun moving along its true path. NASA terrain loads automatically, and the green **Terrain: LOLA 240 m** chip in the top bar confirms it.
+2. Click **Take the 60-second tour**, or **Start planning** to go straight to the planner. It walks through the problem, the sky view, the GO call, launch slips, the landing window finder, the ice-filled crater, the 3D view and the validation.
 3. Scroll to **How we know it's right** to see the app's results checked live against published science.
 
 ## Why it matters

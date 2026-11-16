@@ -4,6 +4,7 @@ import { SITES, CUSTOM, siteById } from './sites.js';
 import { loadDEM, cacheDEM, restoreDEM, deleteDEM, clearHorizonCache, mapToLL } from './terrain.js';
 import { renderAll, renderNow, renderCompare, renderMap, findBest } from './render.js';
 import { initFeatures, applyHash } from './features.js';
+import { initIntro } from './intro.js';
 
 const $ = id => document.getElementById(id);
 
@@ -14,6 +15,7 @@ const $ = id => document.getElementById(id);
 function setDemStatus(text, state, pct) {
   $('demStatus').textContent = text;
   st.demLoading = state === 'loading';
+  st.demPct = state === 'loading' ? (pct || 0) : null;
   const chip = state === 'ok' ? `Terrain: LOLA ${st.dem.scale} m` : state === 'loading' ? `Terrain: loading ${Math.round(pct || 0)}%` : 'Terrain: smooth Moon';
   $('terrainChip').innerHTML = `<span class="dot ${state === 'ok' ? 'on' : 'off'}"></span><span>${chip}</span>`;
 }
@@ -97,7 +99,7 @@ function init() {
   const eb = $('explainBtn');
   eb.onclick = () => {
     const on = document.body.classList.toggle('explain-on');
-    eb.textContent = 'Explain mode: ' + (on ? 'on' : 'off'); eb.setAttribute('aria-pressed', on);
+    eb.textContent = on ? 'Hide explanations' : 'Explain'; eb.setAttribute('aria-pressed', on);
   };
 
   $('mapRad').onchange = e => { st.mapRad = +e.target.value; renderMap(); };
@@ -120,6 +122,17 @@ function init() {
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', renderAll);
 
   initFeatures();
+
+  // Title screen: start, quick-jump buttons, and skip it for shared links.
+  const toPlanner = (focus) => {
+    $('scenario').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    if (focus) setTimeout(() => $('siteSel').focus({ preventScroll: true }), 400);
+  };
+  $('startBtn').onclick = () => toPlanner(true);
+  document.querySelectorAll('.quick-b').forEach(b => (b.onclick = () => { st.site = siteById(b.dataset.site); st.frac = 0; renderAll(); toPlanner(false); }));
+  if (/=/.test(location.hash)) requestAnimationFrame(() => $('scenario').scrollIntoView({ block: 'start' }));
+  initIntro();
+
   st.demLoading = true;            // terrain download starts right after the first render
   setDemStatus('Loading NASA LOLA terrain…', 'loading', 0);
   renderAll();

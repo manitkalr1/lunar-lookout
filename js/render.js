@@ -50,6 +50,7 @@ function syncInputs() {
   $('latIn').value = st.site.lat;
   $('lonIn').value = st.site.lon;
   $('survOut').textContent = `≈ ${fmtH(st.battKWh * 1000 / st.loadW)} on battery in darkness`;
+  $('setSummary').textContent = `${st.site.lat.toFixed(2)}°, ${st.site.lon.toFixed(2)}° · ${st.mast} m mast · ${st.arrayW} W array, ${st.loadW} W draw, ${st.battKWh} kWh battery`;
   const d = new Date(st.t0), p = n => String(n).padStart(2, '0');
   $('dateIn').value = `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}T${p(d.getUTCHours())}:00`;
   syncTime();
@@ -169,7 +170,7 @@ function renderReadiness() {
   ].map(([k, val, cl, n, tip]) => `<div class="stat" title="${esc(tip)}"><span class="k">${k}</span><span class="v ${cl}">${val}</span><span class="n">${n}</span></div>`).join('');
   const nasa = NASA_ILLUM[S.site.id];
   $('nasaNote').hidden = !nasa;
-  if (nasa) $('nasaNote').textContent = `NASA LOLA 18.6-year average here: ☀️ ${Math.round(nasa.sun)}% sunlight · 🌍 ${Math.round(nasa.earth)}% Earth visibility (long-term reference; the numbers above are for your mission dates).`;
+  if (nasa) $('nasaNote').textContent = `For comparison, NASA's 18.6-year average for this site is ${Math.round(nasa.sun)}% sunlight and ${Math.round(nasa.earth)}% Earth visibility. The numbers above are for your mission dates only.`;
 }
 
 // ---------- timeline strips ----------

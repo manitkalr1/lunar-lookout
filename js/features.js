@@ -242,7 +242,7 @@ function downloadCSV() {
 
 // ---------------------------------------------------------------- guided tour
 const TOUR = [
-  { el: 'brief', act: () => { $('brief').classList.remove('collapsed'); $('briefMore').textContent = 'Show less'; $('briefMore').setAttribute('aria-expanded', 'true'); }, title: 'The problem', text: 'Artemis astronauts and robotic landers are heading for the lunar south pole. There the Sun skims the horizon and mountains can hide Earth. Pick the wrong site or date and a lander loses power, or loses contact with Earth.' },
+  { el: 'intro', title: 'The problem', text: 'Artemis astronauts and robotic landers are heading for the lunar south pole. The Sun there skims the horizon and mountains can hide Earth. Pick the wrong site or date and a lander loses power, or loses contact with home. Behind this text: the real horizon of one site, with the Sun moving along its true path.' },
   { el: 'horizonSec', title: 'The sky above a landing site', text: 'This is the sky above the connecting ridge, a 2 km high ridge beside Shackleton crater. The grey outline is the real horizon, traced from NASA LOLA laser-altimeter terrain. The orange track is the Sun over a 30-day mission and the blue loop is Earth. Press Play to watch them move.', act: () => setSite('ridge') },
   { el: 'readySec', title: 'Is it a GO?', text: 'The app flies the mission hour by hour: the solar array charges the battery in sunlight, the battery carries the lander through each night, and Earth contact is tracked for radio. That gives a Landing Site Score from 0 to 100 and a GO / CAUTION / NO-GO call, plus countdowns to the next sunset and Earthset.' },
   { el: 'slipSec', title: 'What if the launch slips?', text: 'Launches slip. This table reruns the whole mission for a 1-day, 1-week, 2-week and 1-month delay, so planners can see the risk before it happens.' },
@@ -314,11 +314,6 @@ export function initFeatures() {
   $('winCv').addEventListener('keydown', winKeys);
   $('winCv').addEventListener('blur', () => { kbd = null; drawWindows(); });
   $('tourBtn').onclick = () => showTour(0);
-  $('briefMore').onclick = () => {
-    const open = $('brief').classList.toggle('collapsed') === false;
-    $('briefMore').textContent = open ? 'Show less' : 'Read more';
-    $('briefMore').setAttribute('aria-expanded', String(open));
-  };
   $('tourNext').onclick = () => showTour(tourI + 1);
   $('tourBack').onclick = () => showTour(tourI - 1);
   $('tourClose').onclick = () => showTour(-1);

@@ -152,8 +152,8 @@ function scheduleValidation() {
     const rows = [
       ['Shackleton crater depth', `${depth.toFixed(1)} km`, '~4.2 km (Zuber et al. 2012, Nature)', Math.abs(depth - 4.2) < 0.6],
       ['Malapert massif height', `${(mal / 1000).toFixed(1)} km`, '~5 km above datum', mal > 4000 && mal < 6000],
-      ['Shackleton floor sunlight (1 yr)', `${shack.sun.toFixed(1)}%`, 'Permanently shadowed', shack.sun < 1],
-      ['Haworth floor sunlight (1 yr)', `${haw.sun.toFixed(1)}%`, 'Permanently shadowed', haw.sun < 1],
+      ['Shackleton floor sunlight (1 yr)', `${shack.sun.toFixed(0)}%`, 'Permanently shadowed', shack.sun < 1],
+      ['Haworth floor sunlight (1 yr)', `${haw.sun.toFixed(0)}%`, 'Permanently shadowed', haw.sun < 1],
       ['Connecting ridge sunlight (1 yr)', `${ridge.sun.toFixed(0)}%`, '~80–90% (Mazarico et al. 2011, Icarus)', ridge.sun > 70 && ridge.sun < 95],
       ['Connecting ridge longest night', fmtH(ridge.longestDark), 'Days, not weeks (Mazarico et al. 2011)', ridge.longestDark < 10 * 24],
     ];
@@ -206,7 +206,7 @@ function downloadCSV() {
 
 // ---------------------------------------------------------------- guided tour
 const TOUR = [
-  { el: 'brief', title: 'The problem', text: 'Artemis astronauts and robotic landers are heading for the lunar south pole. There the Sun skims the horizon and mountains can hide Earth. Pick the wrong site or date and a lander loses power, or loses contact with Earth.' },
+  { el: 'brief', act: () => { $('brief').classList.remove('collapsed'); $('briefMore').textContent = 'Show less'; $('briefMore').setAttribute('aria-expanded', 'true'); }, title: 'The problem', text: 'Artemis astronauts and robotic landers are heading for the lunar south pole. There the Sun skims the horizon and mountains can hide Earth. Pick the wrong site or date and a lander loses power, or loses contact with Earth.' },
   { el: 'horizonSec', title: 'The sky above a landing site', text: 'This is the sky above the connecting ridge, a 2 km high ridge beside Shackleton crater. The grey outline is the real horizon, traced from NASA LOLA laser-altimeter terrain. The orange track is the Sun over a 30-day mission and the blue loop is Earth. Press Play to watch them move.', act: () => setSite('ridge') },
   { el: 'readySec', title: 'Is it a GO?', text: 'The app flies the mission hour by hour: the solar array charges the battery in sunlight, the battery carries the lander through each night, and Earth contact is tracked for radio. That gives a Landing Site Score from 0 to 100 and a GO / CAUTION / NO-GO call, plus countdowns to the next sunset and Earthset.' },
   { el: 'slipSec', title: 'What if the launch slips?', text: 'Launches slip. This table reruns the whole mission for a 1-day, 1-week, 2-week and 1-month delay, so planners can see the risk before it happens.' },
@@ -278,6 +278,11 @@ export function initFeatures() {
   $('winCv').addEventListener('keydown', winKeys);
   $('winCv').addEventListener('blur', () => { kbd = null; drawWindows(); });
   $('tourBtn').onclick = () => showTour(0);
+  $('briefMore').onclick = () => {
+    const open = $('brief').classList.toggle('collapsed') === false;
+    $('briefMore').textContent = open ? 'Show less' : 'Read more';
+    $('briefMore').setAttribute('aria-expanded', String(open));
+  };
   $('tourNext').onclick = () => showTour(tourI + 1);
   $('tourBack').onclick = () => showTour(tourI - 1);
   $('tourClose').onclick = () => showTour(-1);

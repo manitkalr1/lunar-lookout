@@ -119,7 +119,7 @@ footer { font-size:12.5px; color:var(--muted); max-width:90ch }
 .track { height:8px; border-radius:4px; background:var(--line); overflow:hidden; display:block }
 .track > span { display:block; height:100% }
 /* Power inputs */
-fieldset.power { border:1px solid var(--line); border-radius:8px; padding:6px 10px 10px; margin:0; display:flex; flex-wrap:wrap; gap:8px 12px; align-items:end }
+fieldset.power { border:1px solid var(--line); border-radius:8px; padding:2px 10px 8px; margin:0; display:flex; flex-wrap:wrap; gap:8px 12px; align-items:end }
 fieldset.power legend { font-size:12px; font-weight:600; color:var(--ink-2); padding:0 4px }
 fieldset.power input { width:86px }
 progress { width:100%; height:8px; accent-color:var(--accent) }
@@ -155,3 +155,40 @@ input[aria-invalid="true"] { border-color:var(--bad) }
 #verdict .pill { font:700 28px/1 var(--font-display); letter-spacing:.04em; padding:10px 16px; border-radius:8px }
 #verdict .score { grid-template-columns:auto auto; column-gap:14px; row-gap:6px }
 #verdict .score-n { font-size:46px }
+
+/* Collapsible brief: two lines until "Read more" */
+.brief { grid-template-areas:"text facts" "actions facts" }
+.brief-text { grid-area:text } .brief-facts { grid-area:facts } .brief-actions { grid-area:actions }
+@media (max-width:900px) { .brief { grid-template-areas:"text" "facts" "actions" } }
+.brief.collapsed { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"text actions"; align-items:center; column-gap:20px }
+@media (max-width:900px) { .brief.collapsed { grid-template-columns:1fr; grid-template-areas:"text" "actions"; row-gap:8px } }
+.brief.collapsed .brief-facts { display:none }
+.brief.collapsed .brief-text p:first-of-type { display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin:0 }
+.brief.collapsed .brief-text p ~ p { display:none }
+.brief.collapsed h2 { margin-bottom:4px }
+.brief-actions { align-self:end }
+.brief.collapsed .brief-actions { align-self:center }
+
+/* Provisional numbers while terrain loads */
+.verdict.calc .score-n, .verdict.calc .pill, .verdict.calc ul, .sbars.calc { opacity:.4; filter:grayscale(1) }
+.verdict.calc .score-k { color:var(--ink-2); font-weight:600 }
+
+/* Buttons: clear hover and keyboard focus everywhere */
+button { transition:border-color .12s, background-color .12s, color .12s }
+button:hover:not(:disabled) { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--bg)) }
+button.primary:hover:not(:disabled) { background:color-mix(in srgb, var(--accent) 85%, var(--ink)); border-color:color-mix(in srgb, var(--accent) 85%, var(--ink)) }
+button:focus-visible, select:focus-visible, input:focus-visible, canvas:focus-visible, .tablewrap:focus-visible, a:focus-visible { outline:3px solid var(--accent); outline-offset:2px }
+button:disabled { opacity:.5; cursor:not-allowed }
+button.x:hover:not(:disabled) { background:none; color:var(--ink) }
+.stat[title] { cursor:help }
+@media (prefers-reduced-motion: reduce) { button { transition:none } }
+/* Long site names must not push the dropdown past the panel on phones */
+.controls .field { max-width:100%; min-width:0 }
+.controls select { max-width:100%; text-overflow:ellipsis }
+@media (max-width:480px) {
+  .controls > .field:first-child { flex:1 1 100% }
+  .controls > .field:first-child select { width:100% }
+}
+.drop, .drop * { overflow-wrap:anywhere }
+.drop > *, .drop .field { min-width:0 }
+input[type=file] { max-width:100%; width:100% }

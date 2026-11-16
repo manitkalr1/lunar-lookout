@@ -119,7 +119,7 @@ function renderHorizon() {
     if (az < 0 || az > 360) return hideTip();
     const el = hi - (e.clientY - r.top - T) / ph * (hi - lo);
     const hzv = H.hz[Math.round(az * 2) % 720];
-    showTip(e, `Azimuth ${az.toFixed(1)}°\nTerrain horizon ${hzv.toFixed(2)}°\nCursor elevation ${el.toFixed(2)}°`);
+    showTip(e, `Azimuth ${az.toFixed(2)}°\nTerrain horizon ${hzv.toFixed(2)}°\nCursor elevation ${el.toFixed(2)}°`);
   };
   cv.onmouseleave = hideTip;
 }
@@ -135,8 +135,11 @@ function renderReadiness() {
     ? 'Real terrain still loading — results below assume a smooth Moon and will change.'
     : 'Real terrain did not load — results below assume a smooth Moon. Reload the page to try again.';
   const v = m.verdict;
-  $('verdict').className = 'verdict ' + v.lvl;
-  $('verdict').innerHTML = `<div class="score"><span class="score-n mono">${m.score.total}</span><span class="score-k">Landing Site Score</span><span class="pill ${v.lvl}">${v.label}</span></div><ul>${v.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul>`;
+  const calc = st.demLoading && inDem;   // smooth-Moon numbers are provisional while terrain loads
+  $('verdict').className = 'verdict ' + v.lvl + (calc ? ' calc' : '');
+  $('verdict').setAttribute('aria-busy', String(calc));
+  $('verdict').innerHTML = `<div class="score"><span class="score-n mono" title="Landing Site Score from 0 to 100: power survival (40) + communication (35) + sunlight (25)">${m.score.total}</span><span class="score-k">Landing Site Score${calc ? ' · calculating…' : ''}</span><span class="pill ${v.lvl}">${v.label}</span></div><ul>${v.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul>`;
+  $('scoreBars').classList.toggle('calc', calc);
   const sc0 = m.score;
   $('scoreBars').innerHTML = [['Power survival', sc0.power, 40, '--accent'], ['Communication', sc0.comms, 35, '--earth'], ['Sunlight', sc0.light, 25, '--sun']]
     .map(([k, v2, max, col]) => `<div class="sbar"><span>${k}</span><span class="track" role="img" aria-label="${k}: ${v2.toFixed(0)} of ${max} points"><span style="width:${(100 * v2 / max).toFixed(1)}%;background:var(${col})"></span></span><span class="mono">${v2.toFixed(0)}/${max}</span></div>`).join('');
@@ -150,13 +153,19 @@ function renderReadiness() {
   const earTxt = ec.ms ? `${ec.now ? 'Earthset' : 'Earthrise'} in ${fmtDur(ec.ms - t)}` : (ec.now ? 'Stays in view 120+ days' : 'Not visible for 120+ days');
   const sgn = x => (x >= 0 ? '+' : '') + x.toFixed(2) + '°';
   $('stats').innerHTML = [
-    ['Sun above local horizon', sgn(now.sEl - now.sHz), 'sun', `${Math.round(now.frac * 100)}% of disk visible · ${sunTxt}`],
-    ['Earth above local horizon', sgn(now.eEl - now.eHz), 'earth', earTxt],
-    ['Sunlight over mission', `${m.sun.toFixed(0)}%`, 'sun', `Longest night ${fmtH(m.longestDark)}`],
-    ['Earth in view over mission', `${m.earth.toFixed(0)}%`, 'earth', `Longest blackout ${fmtH(m.longestNoEarth)}`],
-    ['Lowest battery', `${Math.round(m.minSoc * 100)}%`, '', m.deadH ? `Flat for ${fmtH(m.deadH)} from day ${m.firstDeadDay.toFixed(1)}` : `Survives ${fmtH(st.battKWh * 1000 / st.loadW)} of darkness`],
-    ['Highest Sun over horizon', `${m.maxSun.toFixed(1)}°`, '', `Horizon: ${S.H.terrain ? 'NASA LOLA terrain' : 'smooth Moon'}`],
-  ].map(([k, val, cl, n]) => `<div class="stat"><span class="k">${k}</span><span class="v ${cl}">${val}</span><span class="n">${n}</span></div>`).join('');
+    ['Sun above local horizon', sgn(now.sEl - now.sHz), 'sun', `${Math.round(now.frac * 100)}% of disk visible · ${sunTxt}`,
+      'Elevation of the centre of the Sun above the local mountain horizon right now, in degrees. Negative means the Sun is hidden behind terrain.'],
+    ['Earth above local horizon', sgn(now.eEl - now.eHz), 'earth', earTxt,
+      'Elevation of the centre of Earth above the local mountain horizon right now, in degrees. Positive means a direct radio link to Earth is possible.'],
+    ['Sunlight over mission', `${m.sun.toFixed(0)}%`, 'sun', `Longest night ${fmtH(m.longestDark)}`,
+      'Share of the whole mission with the Sun above the local horizon, counting partly hidden Sun by how much of its disk shows. "Longest night" is the longest unbroken stretch of darkness.'],
+    ['Earth in view over mission', `${m.earth.toFixed(0)}%`, 'earth', `Longest blackout ${fmtH(m.longestNoEarth)}`,
+      'Share of the whole mission with Earth above the local horizon. "Longest blackout" is the longest stretch with no direct line to Earth.'],
+    ['Lowest battery', `${Math.round(m.minSoc * 100)}%`, '', m.deadH ? `Flat for ${fmtH(m.deadH)} from day ${m.firstDeadDay.toFixed(1)}` : `Survives ${fmtH(st.battKWh * 1000 / st.loadW)} of darkness`,
+      'The lowest the battery gets during the mission, from the hour-by-hour power simulation. 0% means the lander runs out of power.'],
+    ['Highest Sun over horizon', `${m.maxSun.toFixed(2)}°`, '', `Horizon: ${S.H.terrain ? 'NASA LOLA terrain' : 'smooth Moon'}`,
+      'The highest the Sun gets above the local mountain horizon during the mission, in degrees. At the pole the Sun stays very low.'],
+  ].map(([k, val, cl, n, tip]) => `<div class="stat" title="${esc(tip)}"><span class="k">${k}</span><span class="v ${cl}">${val}</span><span class="n">${n}</span></div>`).join('');
 }
 
 // ---------- timeline strips ----------

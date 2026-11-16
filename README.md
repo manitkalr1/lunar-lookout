@@ -4,6 +4,10 @@
 
 **Live app: https://manitkalr1.github.io/lunar-lookout/**
 
+**A weather forecast for Moon landing sites.** Pick a site and a date and get the answer in one line:
+
+![Lunar weather forecast: Sunny, sunset in 106.5 days · Earth below the horizon, Earthrise in 10.8 h · Mission call: GO](docs/forecast.png)
+
 Will your lander have power and a line to Earth? Pick any site and date at the lunar south pole. Lunar Lookout shows where the **Sun** (power) and **Earth** (direct radio contact) sit above the site's *real* terrain horizon, built from NASA LRO LOLA laser-altimeter data. It then flies the mission hour by hour and gives the landing a **Landing Site Score from 0 to 100**.
 
 ![Lunar Lookout: sky above the connecting ridge and mission readiness](docs/hero.png)
@@ -22,6 +26,7 @@ NASA's Artemis astronauts and many robotic landers are heading to the lunar sout
 
 - **Mission brief and 60-second guided tour**: walks a first-time visitor from the problem to the answer
 - **Horizon view**: the 360° real terrain horizon with the Sun and Earth paths over the whole mission, plus a time slider and Play button
+- **Lunar weather forecast**: one plain-language line ("☀️ Sunny, sunset in 87 h · 🌍 Earth hidden, Earthrise in 44 h · Mission call: GO") that updates as you move through time
 - **Landing Site Score (0–100) and GO / CAUTION / NO-GO call**: from an hour-by-hour power simulation (solar array, power draw, battery) plus Earth contact. Countdowns show the next sunset and Earthset
 - **Landing window finder**: a heatmap of every south-pole site × the next 60 landing days, where each square is a full mission simulation. Click a square to load it
 - **Launch-slip analysis**: what a +1 day, +1 week, +2 weeks or +1 month delay changes

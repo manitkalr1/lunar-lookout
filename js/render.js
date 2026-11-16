@@ -127,6 +127,12 @@ function renderHorizon() {
 function renderReadiness() {
   const S = MAIN, m = S.m, t = tCur(), now = sample(S.site, S.H, S.f, t);
   $('windowLbl').textContent = `${st.days}-day mission from ${fmtDate(st.t0)}`;
+  // Never show smooth-Moon numbers for a south-pole site without saying so.
+  const banner = $('terrainBanner'), inDem = S.site.lat <= -75.3;
+  banner.hidden = !!st.dem || !inDem;
+  if (!banner.hidden) banner.textContent = st.demLoading
+    ? 'Real terrain still loading — results below assume a smooth Moon and will change.'
+    : 'Real terrain did not load — results below assume a smooth Moon. Reload the page to try again.';
   const v = m.verdict;
   $('verdict').className = 'verdict ' + v.lvl;
   $('verdict').innerHTML = `<div class="score"><span class="score-n mono">${m.score.total}</span><span class="score-k">Landing Site Score</span><span class="pill ${v.lvl}">${v.label}</span></div><ul>${v.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul>`;

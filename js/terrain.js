@@ -141,3 +141,6 @@ export async function restoreDEM() {
     });
   } catch (e) { return null; }
 }
+export async function deleteDEM() {
+  try { const db = await idb(); db.transaction('dem', 'readwrite').objectStore('dem').delete('dem'); } catch (e) { /* storage unavailable */ }
+}

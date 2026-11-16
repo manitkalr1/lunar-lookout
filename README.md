@@ -118,7 +118,7 @@ The tests check:
 
 - **LRO LOLA** `LDEM_75S_240M` polar elevation model (NASA PDS Geosciences Node / MIT imbrium mirror), bundled in `data/`
 - **astronomy-engine** 2.1.19 and **three.js** 0.170 (both MIT licence), bundled in `vendor/`
-- Landing-site coordinates are approximate. Verify them in [LROC Quickmap](https://quickmap.lroc.asu.edu/) before quoting.
+- Landing-site coordinates are approximate. Verify them in [LROC Quickmap](https://quickmap.lroc.im-ldi.com/) before quoting.
 - **JPL Horizons** can be used to spot-check Sun and Earth positions for any site and time.
 
 ## Limitations

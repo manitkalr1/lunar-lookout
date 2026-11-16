@@ -148,14 +148,21 @@ function scheduleValidation() {
 
 // ---------------------------------------------------------------- share + CSV
 export function applyHash() {
-  const q = new URLSearchParams(location.hash.slice(1));
-  if (!q.size) return;
+  // Any missing or malformed value is ignored and the default kept.
+  let q;
+  try { q = new URLSearchParams(location.hash.slice(1)); } catch (e) { return; }
+  if (![...q.keys()].length) return;
+  const num = (k, lo, hi) => {
+    if (!q.has(k) || q.get(k).trim() === '') return null;
+    const v = Number(q.get(k));
+    return Number.isFinite(v) && v >= lo && v <= hi ? v : null;
+  };
   const site = q.get('site');
-  if (site === 'custom' && q.has('lat') && q.has('lon')) { CUSTOM.lat = +q.get('lat'); CUSTOM.lon = +q.get('lon'); st.site = CUSTOM; }
-  else if (siteById(site)) st.site = siteById(site);
+  const la = num('lat', -90, 90), lo = num('lon', -180, 360);
+  if (site === 'custom' && la !== null && lo !== null) { CUSTOM.lat = Math.max(-89.99, la); CUSTOM.lon = lo > 180 ? lo - 360 : lo; st.site = CUSTOM; }
+  else if (site && site !== 'custom' && siteById(site)) st.site = siteById(site);
   const t = Date.parse(q.get('t') || '');
-  if (!isNaN(t)) st.t0 = Math.floor(t / HOUR) * HOUR;
-  const num = (k, lo, hi) => { const v = +q.get(k); return q.has(k) && v >= lo && v <= hi ? v : null; };
+  if (Number.isFinite(t) && t > Date.UTC(1950, 0, 1) && t < Date.UTC(2100, 0, 1)) st.t0 = Math.floor(t / HOUR) * HOUR;
   const d = num('days', 1, 90); if (d && [14, 30, 60, 90].includes(d)) { st.days = d; $('durSel').value = String(d); }
   const m = num('mast', 0, 50); if (m !== null) { st.mast = m; $('mastIn').value = m; }
   const a = num('array', 0, 20000); if (a !== null) { st.arrayW = a; $('arrayIn').value = a; }
@@ -218,8 +225,13 @@ function update3D(force) {
   clearTimeout(v3Timer);
   v3Timer = setTimeout(() => v3.update3D(tNow(), force), st.playing ? 300 : 40);
 }
+function hasWebGL() {
+  try { const c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl'))); }
+  catch (e) { return false; }
+}
 async function load3D() {
   if (v3 || v3Loading) return; v3Loading = true;
+  if (!hasWebGL()) { $('view3dMsg').textContent = 'The 3D view needs WebGL, which is turned off or unavailable in this browser. Everything else still works.'; return; }
   try {
     $('view3dMsg').textContent = 'Loading 3D view…';
     v3 = await import('./view3d.js');

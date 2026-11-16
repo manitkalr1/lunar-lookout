@@ -1,23 +1,29 @@
 // App entry: builds the controls and wires events.
 import { HOUR, st } from './state.js';
 import { SITES, CUSTOM, siteById } from './sites.js';
-import { loadDEM, cacheDEM, restoreDEM, clearHorizonCache, mapToLL } from './terrain.js';
+import { loadDEM, cacheDEM, restoreDEM, deleteDEM, clearHorizonCache, mapToLL } from './terrain.js';
 import { renderAll, renderNow, renderCompare, renderMap, findBest } from './render.js';
 import { initFeatures, applyHash } from './features.js';
 
 const $ = id => document.getElementById(id);
 
-function setDemStatus(text, ok) {
+/**
+ * Terrain status for the panel and the header chip.
+ * state: 'ok' (loaded), 'loading' (pct 0-100), or 'off' (no terrain).
+ */
+function setDemStatus(text, state, pct) {
   $('demStatus').textContent = text;
-  $('terrainChip').innerHTML = `<span class="dot ${ok ? 'on' : 'off'}"></span><span>Terrain: ${ok ? 'LOLA ' + st.dem.scale + ' m' : 'smooth Moon'}</span>`;
+  st.demLoading = state === 'loading';
+  const chip = state === 'ok' ? `Terrain: LOLA ${st.dem.scale} m` : state === 'loading' ? `Terrain: loading ${Math.round(pct || 0)}%` : 'Terrain: smooth Moon';
+  $('terrainChip').innerHTML = `<span class="dot ${state === 'ok' ? 'on' : 'off'}"></span><span>${chip}</span>`;
 }
 
 async function handleFile(file) {
   if (!file) return;
-  setDemStatus(`Reading ${file.name}…`, false);
+  setDemStatus(`Reading ${file.name}…`, 'loading', 0);
   const buf = await file.arrayBuffer();
   const r = loadDEM(buf, file.name);
-  setDemStatus(r.message, r.ok);
+  setDemStatus(r.message, r.ok ? 'ok' : (st.dem ? 'ok' : 'off'));
   if (r.ok) { renderAll(); cacheDEM(buf, file.name); }
 }
 
@@ -33,8 +39,15 @@ function init() {
   sel.onchange = () => { st.site = siteById(sel.value); st.frac = 0; renderAll(); };
 
   const setCustom = () => {
-    const la = +$('latIn').value, lo = +$('lonIn').value;
-    if (isNaN(la) || isNaN(lo) || la < -90 || la > 90) return;
+    const lv = $('latIn').value.trim(), ov = $('lonIn').value.trim();
+    const la = Number(lv), lo = Number(ov), msg = $('coordMsg');
+    let err = '';
+    if (lv === '' || !Number.isFinite(la) || la < -90 || la > 90) err = 'Latitude must be between −90 and 90.';
+    else if (ov === '' || !Number.isFinite(lo) || lo < -180 || lo > 360) err = 'Longitude must be between −180 and 180 (or 0 to 360).';
+    msg.textContent = err;
+    $('latIn').setAttribute('aria-invalid', String(err.startsWith('Lat')));
+    $('lonIn').setAttribute('aria-invalid', String(err.startsWith('Lon')));
+    if (err) return;
     CUSTOM.lat = Math.max(-89.99, la); CUSTOM.lon = lo > 180 ? lo - 360 : lo;
     st.site = CUSTOM; renderAll();
   };
@@ -107,6 +120,8 @@ function init() {
   matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', renderAll);
 
   initFeatures();
+  st.demLoading = true;            // terrain download starts right after the first render
+  setDemStatus('Loading NASA LOLA terrain…', 'loading', 0);
   renderAll();
   loadInitialTerrain();
 }
@@ -114,36 +129,65 @@ function init() {
 // Terrain on startup: a file the user dropped earlier (e.g. the 40 m DEM) wins,
 // otherwise the bundled NASA LOLA 240 m south-pole DEM in data/.
 const BUNDLED = 'data/LDEM_75S_240M.IMG';
+const BUNDLED_BYTES = 29062688;   // 3812 × 3812 × 2 bytes
+
+/**
+ * Download the bundled DEM. Never trusts content-length: GitHub Pages serves the
+ * file gzip-compressed, so that header is the compressed size while the browser
+ * hands us the decompressed bytes. Chunks are collected and joined at the end.
+ */
+async function download(onProgress) {
+  const res = await fetch(BUNDLED);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  let buf;
+  if (res.body && res.body.getReader) {
+    const reader = res.body.getReader(), chunks = [];
+    let got = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value); got += value.length;
+      onProgress(Math.min(100, 100 * got / BUNDLED_BYTES));
+    }
+    buf = new Uint8Array(got);
+    let off = 0;
+    for (const c of chunks) { buf.set(c, off); off += c.length; }
+  } else {
+    buf = new Uint8Array(await res.arrayBuffer());   // older browsers: no streaming
+  }
+  if (buf.byteLength !== BUNDLED_BYTES) throw new Error(`got ${buf.byteLength} bytes, expected ${BUNDLED_BYTES}`);
+  return buf.buffer;
+}
+
 async function loadInitialTerrain() {
   const saved = await restoreDEM();
   if (saved) {
     const r = loadDEM(saved.buf, saved.name);
-    setDemStatus(r.message, r.ok);
-    if (r.ok) return renderAll();
+    if (r.ok) { setDemStatus(r.message, 'ok'); return renderAll(); }
+    await deleteDEM();               // stale or corrupt copy: drop it and download fresh
   }
-  try {
-    setDemStatus('Loading NASA LOLA terrain (29 MB)…', false);
-    const res = await fetch(BUNDLED);
-    if (!res.ok) throw new Error(res.status);
-    const total = +res.headers.get('content-length') || 29062688;
-    const prog = $('demProg'); prog.hidden = false;
-    const buf = new Uint8Array(total); let got = 0;
-    const reader = res.body.getReader();
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (got + value.length > buf.length) throw new Error('size');
-      buf.set(value, got); got += value.length;
-      prog.value = got / total;
-      setDemStatus(`Loading NASA LOLA terrain… ${Math.round(100 * got / total)}%`, false);
-    }
-    prog.hidden = true;
-    const r = loadDEM(buf.buffer.slice(0, got), 'LDEM_75S_240M.IMG');
-    setDemStatus(r.message, r.ok);
-    if (r.ok) renderAll();
-  } catch (e) {
-    setDemStatus(`Could not load ${BUNDLED}. Drop the LOLA file here instead. Until then, results use a smooth Moon.`, false);
+  const prog = $('demProg');
+  const onProgress = pct => {
+    prog.hidden = false; prog.value = pct / 100;
+    setDemStatus(`Loading NASA LOLA terrain… ${Math.round(pct)}%`, 'loading', pct);
+  };
+  onProgress(0);
+  let lastErr;
+  for (let attempt = 0; attempt < 2; attempt++) {   // one automatic retry
+    try {
+      const buf = await download(onProgress);
+      const r = loadDEM(buf, 'LDEM_75S_240M.IMG');
+      prog.hidden = true;
+      if (!r.ok) throw new Error(r.message);
+      setDemStatus(r.message, 'ok');
+      renderAll();
+      cacheDEM(buf, 'LDEM_75S_240M.IMG');   // next visit loads instantly
+      return;
+    } catch (e) { lastErr = e; }
   }
+  prog.hidden = true;
+  setDemStatus(`Could not load NASA terrain (${lastErr && lastErr.message}). Reload the page to try again, or drop the LOLA file here. Until then, results assume a smooth Moon.`, 'off');
+  renderAll();
 }
 
 if (globalThis.Astronomy) init();

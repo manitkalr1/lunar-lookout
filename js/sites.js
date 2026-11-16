@@ -1,5 +1,5 @@
 // Candidate landing sites. Coordinates are approximate: verify in LROC Quickmap
-// (https://quickmap.lroc.asu.edu/) before quoting them.
+// (https://quickmap.lroc.im-ldi.com/) before quoting them.
 export const SITES = [
   { id: 'ridge', g: 'South pole', name: 'Connecting ridge (Shackleton–de Gerlache)', lat: -89.45, lon: -137.31 },
   { id: 'pole', g: 'South pole', name: 'South Pole, Shackleton rim', lat: -89.95, lon: 0 },

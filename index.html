@@ -76,6 +76,7 @@
           <input id="battIn" type="number" min="0.1" max="1000" step="0.1" value="8.6"></label>
         <span class="sub" id="survOut"></span>
       </fieldset>
+      <span class="coord-msg" id="coordMsg" role="alert"></span>
       <button id="addCmp">Add to comparison</button>
       <button id="shareBtn" title="Copy a link that opens this exact scenario">Copy share link</button>
       <button id="csvBtn" title="Hourly Sun and Earth data for this mission, as a spreadsheet">Download CSV</button>
@@ -106,6 +107,7 @@
 
     <section class="panel" id="readySec" aria-label="Verdict and key numbers">
       <div class="panel-head"><h2>Mission readiness</h2><span class="sub" id="windowLbl"></span></div>
+      <div class="banner-warn" id="terrainBanner" role="status" hidden></div>
       <div class="verdict" id="verdict"></div>
       <div class="sbars" id="scoreBars"></div>
       <div class="stats" id="stats"></div>
@@ -209,7 +211,7 @@
   </section>
 
   <footer>
-    Method: terrain is NASA's Lunar Reconnaissance Orbiter LOLA polar elevation model (LDEM_75S_240M). Sun and Moon positions come from astronomy-engine (VSOP87 / ELP-based, ~1 arcminute), rotated into the Moon's body-fixed frame with the IAU/WGCCRE lunar orientation model (aligned with LOLA's Mean-Earth frame to well under 0.1°). Terrain horizons are ray-traced every 0.5° of azimuth out to 150 km, including lunar curvature. Sunlight uses the fraction of the solar disk above the horizon. The power model flies the mission hour by hour: a vertical Sun-tracking solar array charges the battery, which carries a constant load through each night. Landing Site Score = 40 × lowest battery level (0 if it runs flat) + 35 × Earth-in-view share + 25 × sunlight share. 3D view uses three.js. Landing-site coordinates are approximate; verify in <a href="https://quickmap.lroc.asu.edu/" target="_blank" rel="noopener">LROC Quickmap</a>. Built for NASA Space Apps 2026, challenge: Lunar Landing Site Navigator. <a href="https://github.com/manitkalr1/lunar-lookout" target="_blank" rel="noopener">Source code</a>.
+    Method: terrain is NASA's Lunar Reconnaissance Orbiter LOLA polar elevation model (LDEM_75S_240M). Sun and Moon positions come from astronomy-engine (VSOP87 / ELP-based, ~1 arcminute), rotated into the Moon's body-fixed frame with the IAU/WGCCRE lunar orientation model (aligned with LOLA's Mean-Earth frame to well under 0.1°). Terrain horizons are ray-traced every 0.5° of azimuth out to 150 km, including lunar curvature. Sunlight uses the fraction of the solar disk above the horizon. The power model flies the mission hour by hour: a vertical Sun-tracking solar array charges the battery, which carries a constant load through each night. Landing Site Score = 40 × lowest battery level (0 if it runs flat) + 35 × Earth-in-view share + 25 × sunlight share. 3D view uses three.js. Landing-site coordinates are approximate; verify in <a href="https://quickmap.lroc.im-ldi.com/" target="_blank" rel="noopener">LROC Quickmap</a>. Built for NASA Space Apps 2026, challenge: Lunar Landing Site Navigator. <a href="https://github.com/manitkalr1/lunar-lookout" target="_blank" rel="noopener">Source code</a>.
   </footer>
 </main>
 <div class="tip" id="tip"></div>

@@ -18,6 +18,7 @@ export const st = {
   battKWh: 8.6,      // usable battery capacity, kWh (8.6 kWh / 120 W = ~72 h of darkness)
   compare: ['ridge', 'malapert', 'mouton', 'degerlache'],
   dem: null,         // loaded LOLA DEM, see terrain.js
+  demLoading: false, // true while the bundled DEM downloads
   playing: false,
   mapRad: 170,       // lighting map half-width, km
 };

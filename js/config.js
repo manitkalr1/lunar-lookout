@@ -8,4 +8,4 @@
 export const CHAT_PROXY_URL = 'https://lunar-lookout-advisor.reyanshpparekh.workers.dev';
 
 // Gemini model used when a visitor brings their own key (the Worker sets its own).
-export const GEMINI_MODEL = 'gemini-3.8-flash';
+export const GEMINI_MODEL = 'gemini-3.6-flash';

@@ -67,7 +67,7 @@ NASA named nine candidate landing regions for Artemis on 28 October 2024, publis
 
 ## Mission advisor (AI chat)
 
-The **Ask the advisor** button opens a chat powered by Google Gemini (`gemini-3.8-flash`). With each question the app sends a compact snapshot of what you're looking at: the site, dates, forecast, score breakdown, battery simulation, best landing days, and NASA's long-term values. The advisor answers with those numbers and says when something isn't in them. Replies are shown as plain text with basic formatting, never as raw HTML. Code: `js/chat.js`.
+The **Ask the advisor** button opens a chat powered by Google Gemini (`gemini-3.6-flash`). With each question the app sends a compact snapshot of what you're looking at: the site, dates, forecast, score breakdown, battery simulation, best landing days, and NASA's long-term values. The advisor answers with those numbers and says when something isn't in them. Replies are shown as plain text with basic formatting, never as raw HTML. Code: `js/chat.js`.
 
 The site is public, so it never contains an API key. There are two ways to connect:
 

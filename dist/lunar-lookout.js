@@ -12566,7 +12566,7 @@ Lowest battery ${Math.round(m.minSoc * 100)}%${m.deadH ? " (runs flat)" : ""}`;
 
   // js/config.js
   var CHAT_PROXY_URL = "https://lunar-lookout-advisor.reyanshpparekh.workers.dev";
-  var GEMINI_MODEL = "gemini-3.8-flash";
+  var GEMINI_MODEL = "gemini-3.6-flash";
 
   // js/chat.js
   var KEY_STORE = "lunar-lookout-gemini-key";

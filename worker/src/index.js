@@ -57,7 +57,7 @@ export default {
     const clean = sanitize(raw);
     if (clean.error) return reply(400, { lunarLookoutError: clean.error });
 
-    const model = env.GEMINI_MODEL || 'gemini-3.8-flash';
+    const model = env.GEMINI_MODEL || 'gemini-3.6-flash';
     let res;
     try {
       res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {

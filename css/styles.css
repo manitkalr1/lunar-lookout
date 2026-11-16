@@ -197,6 +197,7 @@ button.ghost:hover:not(:disabled) { background:rgba(255,255,255,.14); border-col
 .quick-b small { color:#aab6c4; font-size:12px; margin-left:4px }
 .quick-b:hover:not(:disabled) { background:rgba(255,255,255,.12); border-color:#fff }
 .intro .credit { margin:10px 0 0; font-size:13px; color:#aab6c4 }
+.intro .byline { margin:-10px 0 0; font-size:13px; color:#aab6c4 }
 .intro .credit a { color:#d5dde6; text-decoration:underline; text-underline-offset:2px }
 .intro .credit a:hover { color:#fff }
 .intro-caption { position:absolute; left:0; right:0; bottom:0; margin:0 auto; max-width:1280px; padding:0 24px 18px; font:12px/1.4 var(--font-mono); color:#93a1b1 }

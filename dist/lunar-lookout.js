@@ -11431,7 +11431,8 @@
   var afterRender = [];
   var onRenderAll = (fn) => afterRender.push(fn);
   function prep(cv2) {
-    const dpr = window.devicePixelRatio || 1, w2 = cv2.clientWidth, h = +cv2.getAttribute("height");
+    var _a2;
+    const dpr = window.devicePixelRatio || 1, w2 = cv2.clientWidth, h = +((_a2 = cv2.dataset).h || (_a2.h = cv2.getAttribute("height")));
     cv2.width = w2 * dpr;
     cv2.height = h * dpr;
     cv2.style.height = h + "px";
@@ -11767,7 +11768,7 @@ Battery ${Math.round(MAIN.soc[i] * 100)}%`;
       strips.push({ label: "Earth", color: css("--earth"), vals: r.S.pts.map((q2) => q2.eVis ? 1 : 0), S: r.S });
     });
     const cv2 = $("cmpCv");
-    cv2.setAttribute("height", Math.max(80, 26 + strips.length * 15));
+    cv2.dataset.h = Math.max(80, 26 + strips.length * 15);
     if (!strips.length) {
       prep(cv2);
       return;
@@ -12078,9 +12079,10 @@ Lowest battery ${Math.round(r.m.minSoc * 100)}%`);
     setTimeout(step, 30);
   }
   function drawWindows() {
+    var _a2;
     const cv2 = $2("winCv");
     if (!cv2 || !win) return;
-    const dpr = devicePixelRatio || 1, w2 = cv2.clientWidth, h = +cv2.getAttribute("height");
+    const dpr = devicePixelRatio || 1, w2 = cv2.clientWidth, h = +((_a2 = cv2.dataset).h || (_a2.h = cv2.getAttribute("height")));
     cv2.width = w2 * dpr;
     cv2.height = h * dpr;
     cv2.style.height = h + "px";

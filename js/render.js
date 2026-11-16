@@ -21,7 +21,8 @@ export const onRenderAll = fn => afterRender.push(fn);
 
 // ---------- helpers ----------
 function prep(cv) {
-  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = +cv.getAttribute('height');
+  // CSS height lives in data-h: cv.height below holds device pixels, so re-reading it would compound on high-DPI screens.
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = +(cv.dataset.h ||= cv.getAttribute('height'));
   cv.width = w * dpr; cv.height = h * dpr; cv.style.height = h + 'px';
   const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
   return { c, w, h };
@@ -252,7 +253,7 @@ export function renderCompare() {
     strips.push({ label: shortName(r.s.name) + ' · Sun', color: css('--sun'), vals: r.S.pts.map(q => q.frac), S: r.S });
     strips.push({ label: 'Earth', color: css('--earth'), vals: r.S.pts.map(q => (q.eVis ? 1 : 0)), S: r.S });
   });
-  const cv = $('cmpCv'); cv.setAttribute('height', Math.max(80, 26 + strips.length * 15));
+  const cv = $('cmpCv'); cv.dataset.h = Math.max(80, 26 + strips.length * 15);
   if (!strips.length) { prep(cv); return; }
   drawStrips(cv, strips, {
     labelW: 170, days: st.days, cursor: st.frac,

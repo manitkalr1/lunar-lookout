@@ -44,7 +44,8 @@ function scheduleWindows() {
 
 function drawWindows() {
   const cv = $('winCv'); if (!cv || !win) return;
-  const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = +cv.getAttribute('height');
+  // CSS height lives in data-h: cv.height below holds device pixels, so re-reading it would compound on high-DPI screens.
+  const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = +(cv.dataset.h ||= cv.getAttribute('height'));
   cv.width = w * dpr; cv.height = h * dpr; cv.style.height = h + 'px';
   const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
   const narrow = w < 560, L = narrow ? 92 : 170, T = 4, B = 22, pw = w - L - 6, rh = (h - T - B) / win.rows.length, cw = pw / WIN_DAYS;

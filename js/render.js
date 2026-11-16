@@ -6,6 +6,7 @@ import { eph } from './ephemeris.js';
 import { demH, llToMap, mapToLL } from './terrain.js';
 import { sample, series, metrics, nextChange, scanLandingDays } from './analysis.js';
 import { fmtH, fmtUTC, fmtDate, fmtDur, esc } from './format.js';
+import { forecastLine, explainLine } from './forecast.js';
 
 const $ = id => document.getElementById(id);
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -140,6 +141,11 @@ function renderReadiness() {
   $('scoreBars').innerHTML = [['Power survival', sc0.power, 40, '--accent'], ['Communication', sc0.comms, 35, '--earth'], ['Sunlight', sc0.light, 25, '--sun']]
     .map(([k, v2, max, col]) => `<div class="sbar"><span>${k}</span><span class="track" role="img" aria-label="${k}: ${v2.toFixed(0)} of ${max} points"><span style="width:${(100 * v2 / max).toFixed(1)}%;background:var(${col})"></span></span><span class="mono">${v2.toFixed(0)}/${max}</span></div>`).join('');
   const sc = nextChange(S, t, 'sun'), ec = nextChange(S, t, 'earth');
+  sc.from = ec.from = t;
+  $('forecast').className = 'forecast ' + v.lvl;
+  // Wrap only between the " · " parts so each phrase stays whole.
+  $('fcLine').innerHTML = forecastLine(now, sc, ec, v).split(' · ').map(p => `<span class="fc-part">${esc(p)}</span>`).join('<span class="fc-sep" aria-hidden="true"> · </span>');
+  $('fcExplain').textContent = explainLine(now, sc, ec);
   const sunTxt = sc.ms ? `${sc.now ? 'Sunset' : 'Sunrise'} in ${fmtDur(sc.ms - t)}` : (sc.now ? 'No sunset within 120 days' : 'No sunrise within 120 days');
   const earTxt = ec.ms ? `${ec.now ? 'Earthset' : 'Earthrise'} in ${fmtDur(ec.ms - t)}` : (ec.now ? 'Stays in view 120+ days' : 'Not visible for 120+ days');
   const sgn = x => (x >= 0 ? '+' : '') + x.toFixed(2) + '°';

@@ -5,6 +5,7 @@ import { series, metrics } from './analysis.js';
 import { demLL, llToMap, demH } from './terrain.js';
 import { renderAll, getMain, onRenderAll, onRenderNow } from './render.js';
 import { fmtDate, fmtUTC, fmtH, pad } from './format.js';
+import { shortForecast } from './forecast.js';
 
 const $ = id => document.getElementById(id);
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -30,7 +31,7 @@ function scheduleWindows() {
   const step = () => {
     if (job !== winJob) return;                       // superseded by a newer request
     const row = win.rows[i];
-    for (let d = 0; d < WIN_DAYS; d++) row.cells.push({ m: metrics(series(row.site, base + d * DAY, st.days)) });
+    for (let d = 0; d < WIN_DAYS; d++) { const S = series(row.site, base + d * DAY, st.days); row.cells.push({ m: metrics(S), q0: S.pts[0] }); }
     drawWindows();
     if (++i < win.rows.length) setTimeout(step, 0); else scheduleValidation();
   };
@@ -76,7 +77,7 @@ function drawWindows() {
   cv.onmousemove = e => {
     const k = hit(e); if (!k || !k.cell) { tip.style.opacity = 0; return; }
     const m = k.cell.m;
-    tip.textContent = `${k.row.site.name}\nLand ${fmtDate(win.base + k.d * DAY)} · ${m.verdict.label} · score ${m.score.total}\nSunlight ${m.sun.toFixed(0)}% · Earth ${m.earth.toFixed(0)}%\nLowest battery ${Math.round(m.minSoc * 100)}%${m.deadH ? ' (runs flat)' : ''}`;
+    tip.textContent = `${k.row.site.name}\nLand ${fmtDate(win.base + k.d * DAY)} · ${shortForecast(k.cell.q0, m.verdict)} · score ${m.score.total}\nSunlight ${m.sun.toFixed(0)}% · Earth ${m.earth.toFixed(0)}%\nLowest battery ${Math.round(m.minSoc * 100)}%${m.deadH ? ' (runs flat)' : ''}`;
     tip.style.opacity = 1; tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
   };
   cv.onmouseleave = () => { tip.style.opacity = 0; };

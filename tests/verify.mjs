@@ -117,5 +117,16 @@ const latlon = v => { const n = Math.hypot(...v); return [Math.asin(v[2] / n) * 
   check('Rejects a non-LOLA file', !r.ok);
 }
 
+// 7. Forecast wording rules (spec: sunny ≥ 0.99, partly 0.05–0.99, dark < 0.05)
+{
+  const F = await import('../js/forecast.js');
+  const v = { label: 'GO' }, H = 3600e3;
+  const line = F.forecastLine({ frac: 1, eVis: false, eEl: 2 }, { ms: 30 * H, from: 0, now: true }, { ms: 44 * H, from: 0, now: false }, v);
+  check('Forecast line reads like a weather report', line === '☀️ Sunny, sunset in 30.0 h · 🌍 Earth hidden behind terrain, Earthrise in 44.0 h · Mission call: GO', line);
+  check('Partly sunny shows the visible share', F.sunWord(0.4).text.startsWith('Partly sunny (40%'), F.sunWord(0.4).text);
+  check('Below 5% of the disk is Dark', F.sunWord(0.04).text === 'Dark');
+  check('Short tooltip forecast', F.shortForecast({ frac: 1, eVis: true }, v) === '☀️ 🌍 GO');
+}
+
 console.log(fails ? `\n${fails} check(s) failed` : '\nAll checks passed');
 process.exit(fails ? 1 : 0);

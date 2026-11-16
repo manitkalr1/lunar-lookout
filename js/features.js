@@ -7,6 +7,7 @@ import { renderAll, getMain, onRenderAll, onRenderNow } from './render.js';
 import { fmtDate, fmtUTC, fmtH, pad } from './format.js';
 import { shortForecast } from './forecast.js';
 import { horizonsChecks } from './horizons.js';
+import { NASA_ILLUM, compareWithNasa } from './nasamaps.js';
 
 const $ = id => document.getElementById(id);
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -119,23 +120,56 @@ function winKeys(e) {
 
 // ---------------------------------------------------------------- validation
 let validKey = null;
-let terrainRows = null;
+let terrainRows = null, nasaRows = null;
+const sgn3 = v => { const t = Math.abs(v).toFixed(3); return (t === '0.000' ? '' : v > 0 ? '+' : '−') + t; };
 function horizonsRows() {
   return horizonsChecks().map(h => [
     h.label,
     `az ${h.appAz.toFixed(2)}°, el ${h.appEl.toFixed(2)}°`,
-    `JPL Horizons: az ${h.az.toFixed(2)}°, el ${h.el.toFixed(2)}° (Δaz ${h.dAz >= 0 ? '+' : ''}${h.dAz.toFixed(3)}°, Δel ${h.dEl >= 0 ? '+' : ''}${h.dEl.toFixed(3)}°)`,
+    `JPL Horizons: az ${h.az.toFixed(2)}°, el ${h.el.toFixed(2)}° (Δaz ${sgn3(h.dAz)}°, Δel ${sgn3(h.dEl)}°)`,
     h.ok,
   ]);
 }
 function drawValidation() {
-  const rows = [...horizonsRows(), ...(terrainRows || [])];
+  const rows = [...horizonsRows(), ...(nasaRows || []), ...(terrainRows || [])];
   const wait = st.dem ? '' : `<tr><td colspan="4" class="sub">${st.demLoading ? 'Terrain checks run once the NASA LOLA terrain has loaded…' : 'Load LOLA terrain to run the terrain checks.'}</td></tr>`;
   $('validTable').innerHTML = `<thead><tr><th>Check</th><th class="num">Lunar Lookout</th><th>Reference</th><th>Match</th></tr></thead><tbody>` +
     rows.map(([k, v, ref, ok]) => `<tr><td>${k}</td><td class="num">${v}</td><td>${ref}</td><td>${ok ? '<span class="delta-up">✓ agrees</span>' : '<span class="delta-down">✕ check</span>'}</td></tr>`).join('') + wait + '</tbody>';
 }
+// Compare with NASA's 18.6-year illumination / Earth-visibility maps, one site per tick.
+function runNasaComparison(demName) {
+  const ids = Object.keys(NASA_ILLUM), res = [];
+  const pct = v => `${Math.round(v)}%`;
+  const step = () => {
+    if (!st.dem || st.dem.name !== demName) return;
+    res.push(compareWithNasa(siteById(ids[res.length])));
+    if (res.length < ids.length) return setTimeout(step, 0);
+    const sunIn = res.filter(r => r.sunOk).length, earthIn = res.filter(r => r.earthOk).length;
+    const meanS = res.reduce((a, r) => a + Math.abs(r.ours.sun - r.ref.sun), 0) / res.length;
+    const meanE = res.reduce((a, r) => a + Math.abs(r.ours.earth - r.ref.earth), 0) / res.length;
+    const by = id => res.find(r => r.site.id === id);
+    const site = (r, k, label) => [
+      `${label} vs NASA 18.6-year ${k === 'sun' ? 'illumination' : 'Earth-visibility'} map`,
+      pct(r.ours[k]),
+      `NASA LOLA map: ${pct(r.ref[k])} (${pct(r.ref[k + 'Min'])}–${pct(r.ref[k + 'Max'])} within ±120 m)`,
+      r[k + 'Ok'],
+    ];
+    nasaRows = [
+      [`Sunlight at ${res.length} south-pole sites vs NASA's 18.6-year illumination map`, `${sunIn} of ${res.length} agree`,
+        `NASA PGDA AVGVISIB map (Mazarico et al.), 120 m/pixel; mean difference ${meanS.toFixed(1)} points`, sunIn >= res.length - 1],
+      [`Earth visibility at ${res.length} sites vs NASA's 18.6-year Earth-visibility map`, `${earthIn} of ${res.length} agree`,
+        `NASA PGDA AVGVISIB_EARTH map; mean difference ${meanE.toFixed(1)} points (counted like NASA: any part of Earth's disk)`, earthIn >= res.length - 1],
+      site(by('ridge'), 'sun', 'Connecting ridge sunlight'),
+      site(by('nobile1'), 'sun', 'Nobile Rim 1 sunlight'),
+      site(by('moutonplat'), 'earth', 'Mons Mouton Plateau Earth visibility'),
+    ];
+    drawValidation();
+  };
+  setTimeout(step, 30);
+}
+
 function scheduleValidation() {
-  if (!st.dem) { terrainRows = null; validKey = null; drawValidation(); return; }
+  if (!st.dem) { terrainRows = null; nasaRows = null; validKey = null; drawValidation(); return; }
   if (validKey === st.dem.name) return;
   validKey = st.dem.name;
   setTimeout(() => {
@@ -160,6 +194,7 @@ function scheduleValidation() {
     ];
     terrainRows = rows;
     drawValidation();
+    runNasaComparison(st.dem.name);
   }, 50);
 }
 

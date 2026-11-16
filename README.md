@@ -105,7 +105,25 @@ These are one-year results from 1 Jan 2026, with a 2 m mast. Run `npm run test:r
 
 Shackleton depth from the DEM is 4.0 km (published value: ~4.2 km, Zuber et al. 2012).
 
-**JPL Horizons cross-check:** for the Sun at the connecting ridge (222.69°E, 89.45°S) at 00:00 UTC on 1 Jan 2027, NASA JPL Horizons gives azimuth 40.4333°, elevation 1.4326°. Lunar Lookout gives 40.4303° and 1.4340°, a difference of 0.003° in azimuth and 0.001° in elevation. The reference values and the exact query are in `js/horizons.js`, and the table in the app shows the comparison live.
+**NASA long-term illumination maps:** NASA's LOLA team publishes 18.6-year average maps of sunlight and Earth visibility ([PGDA product 69](https://pgda.gsfc.nasa.gov/products/69), `AVGVISIB_75S_120M_201608`, Mazarico et al.). Lunar Lookout runs the same 18.6 years (6-hour steps, observer at the surface) at all 15 south-pole sites and compares. Sunlight agrees at 15 of 15 sites (mean difference 7.4 points). Earth visibility also agrees at 15 of 15 (mean difference 5.9 points), counted like NASA, where any part of Earth's disk counts as visible. "Agrees" means within the range NASA's map shows within ±120 m of the point, ±4 points, because values change sharply across ridges. The remaining differences come mostly from our coarser 240 m terrain, which smooths small horizon features. NASA's values are in `js/nasamaps.js`; regenerate them with `tools/extract-nasa-illumination.py`.
+
+| Site | Sunlight: Lunar Lookout / NASA (±120 m range) | Earth: Lunar Lookout / NASA (±120 m range) |
+|---|---|---|
+| Connecting ridge | 77% / 68% (51–85%) | 57% / 52% (44–58%) |
+| Nobile Rim 1 | 79% / 71% (55–84%) | 70% / 62% (43–71%) |
+| Malapert Massif | 64% / 60% (39–66%) | 85% / 78% (55–100%) |
+| Mons Mouton Plateau | 53% / 54% (48–54%) | 100% / 100% (93–100%) |
+| South Pole, Shackleton rim | 35% / 38% (26–39%) | 55% / 55% (55–55%) |
+| Shackleton floor | 0% / 0% | 0% / 0% |
+
+**JPL Horizons cross-check:** four reference positions pulled from the NASA JPL Horizons API (DE441), compared with the app at the same site and time on the 1737.4 km sphere. Queries are in `js/horizons.js`.
+
+| Reference (00:00 UTC) | JPL Horizons az / el | Lunar Lookout az / el | Difference |
+|---|---|---|---|
+| Sun, Connecting Ridge, 1 Jan 2027 | 40.4333° / 1.4326° | 40.4303° / 1.4340° | 0.003° / 0.001° |
+| Earth, Connecting Ridge, 1 Jan 2027 | 144.4607° / −6.6957° | 144.4582° / −6.6958° | 0.003° / 0.000° |
+| Sun, Malapert, 1 Jan 2027 | 260.1693° / 0.3323° | 260.1662° / 0.3334° | 0.003° / 0.001° |
+| Sun, Connecting Ridge, 1 Jul 2027 | 354.0891° / −0.3224° | 354.0888° / −0.3209° | 0.000° / 0.002° |
 
 ## How it works
 
@@ -137,6 +155,7 @@ The tests check:
 - the terrain ray tracer against analytic cases (a 2 km wall 20 km away, within 0.1°; a peak whose horizon must dip below level)
 - the power model (the battery lasts exactly capacity ÷ load hours; a 14-day equatorial night drains it)
 - on the real LOLA data: Shackleton depth, Malapert height, permanently shadowed crater floors, ridge illumination and night length, all against published values
+- against NASA's 18.6-year illumination and Earth-visibility maps at 15 sites, and four JPL Horizons positions
 
 ## Data sources
 

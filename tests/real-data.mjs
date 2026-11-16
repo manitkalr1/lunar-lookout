@@ -57,6 +57,17 @@ check('Ridge longest night is days, not months (Mazarico et al. 2011)', out.ridg
   check('Each region point gets at least 40% sunlight over 2027', minSun >= 40, minSun.toFixed(1) + '% lowest');
 }
 
+// NASA's official 18.6-year illumination and Earth-visibility maps (LOLA team, PGDA)
+{
+  const { NASA_ILLUM, compareWithNasa } = await import('../js/nasamaps.js');
+  const res = Object.keys(NASA_ILLUM).map(id => compareWithNasa(SITES.find(s => s.id === id)));
+  for (const r of res) console.log(`      ${r.site.id.padEnd(12)} sun ours ${r.ours.sun.toFixed(1).padStart(5)} NASA ${String(r.ref.sun).padStart(5)} [${r.ref.sunMin}–${r.ref.sunMax}] ${r.sunOk ? 'ok' : 'OUT'} · earth ours ${r.ours.earth.toFixed(1).padStart(5)} NASA ${String(r.ref.earth).padStart(5)} [${r.ref.earthMin}–${r.ref.earthMax}] ${r.earthOk ? 'ok' : 'OUT'}`);
+  const sunIn = res.filter(r => r.sunOk).length, earthIn = res.filter(r => r.earthOk).length;
+  const mean = k => res.reduce((a, r) => a + Math.abs(r.ours[k] - r.ref[k]), 0) / res.length;
+  check('Sunlight agrees with NASA\'s 18.6-year illumination map', sunIn >= 14, `${sunIn}/${res.length} sites within NASA's ±120 m range (±4 pts); mean |diff| ${mean('sun').toFixed(1)} pts`);
+  check('Earth visibility agrees with NASA\'s 18.6-year Earth-visibility map', earthIn >= 14, `${earthIn}/${res.length} sites within range; mean |diff| ${mean('earth').toFixed(1)} pts`);
+}
+
 // Landing Site Score on real terrain (30-day mission from 15 Nov 2026, default lander)
 st.arrayW = 450; st.loadW = 120; st.battKWh = 8.6;
 const t1 = Date.UTC(2026, 10, 15);

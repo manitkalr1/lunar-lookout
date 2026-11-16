@@ -23,10 +23,24 @@ export const HORIZONS_REFS = [
     az: 40.433291, el: 1.432576, pulled: '2026-11-14',
     query: "COMMAND='10'&CENTER='coord@301'&COORD_TYPE='GEODETIC'&SITE_COORD='222.69,-89.45,0'&START_TIME='2027-01-01'&STOP_TIME='2027-01-02'&STEP_SIZE='1d'&QUANTITIES='4'",
   },
-  // Still to pull with the same query shape (see README):
-  //   Earth (COMMAND='399') at Connecting Ridge, 2027-01-01 00:00 UTC
-  //   Sun at Malapert (SITE_COORD='2.9,-86.0,0'), 2027-01-01 00:00 UTC
-  //   Sun at Connecting Ridge, 2027-07-01 00:00 UTC
+  {
+    label: 'Earth position vs JPL Horizons (Connecting Ridge, 1 Jan 2027)',
+    body: 'earth', lat: -89.45, lonE: 222.69, utc: '2027-01-01T00:00:00Z',
+    az: 144.460730, el: -6.695661, pulled: '2026-11-16',
+    query: "COMMAND='399'&CENTER='coord@301'&COORD_TYPE='GEODETIC'&SITE_COORD='222.69,-89.45,0'&START_TIME='2027-01-01'&STOP_TIME='2027-01-02'&STEP_SIZE='1d'&QUANTITIES='4'",
+  },
+  {
+    label: 'Sun position vs JPL Horizons (Malapert, 1 Jan 2027)',
+    body: 'sun', lat: -86.0, lonE: 2.9, utc: '2027-01-01T00:00:00Z',
+    az: 260.169299, el: 0.332288, pulled: '2026-11-16',
+    query: "COMMAND='10'&CENTER='coord@301'&COORD_TYPE='GEODETIC'&SITE_COORD='2.9,-86.0,0'&START_TIME='2027-01-01'&STOP_TIME='2027-01-02'&STEP_SIZE='1d'&QUANTITIES='4'",
+  },
+  {
+    label: 'Sun position vs JPL Horizons (Connecting Ridge, 1 Jul 2027)',
+    body: 'sun', lat: -89.45, lonE: 222.69, utc: '2027-07-01T00:00:00Z',
+    az: 354.089142, el: -0.322373, pulled: '2026-11-16',
+    query: "COMMAND='10'&CENTER='coord@301'&COORD_TYPE='GEODETIC'&SITE_COORD='222.69,-89.45,0'&START_TIME='2027-07-01'&STOP_TIME='2027-07-02'&STEP_SIZE='1d'&QUANTITIES='4'",
+  },
 ];
 
 export const TOL_AZ = 0.3, TOL_EL = 0.05;   // degrees

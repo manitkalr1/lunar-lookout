@@ -7,6 +7,7 @@ import { demH, llToMap, mapToLL } from './terrain.js';
 import { sample, series, metrics, nextChange, scanLandingDays } from './analysis.js';
 import { fmtH, fmtUTC, fmtDate, fmtDur, esc } from './format.js';
 import { forecastLine, explainLine } from './forecast.js';
+import { NASA_ILLUM } from './nasamaps.js';
 
 const $ = id => document.getElementById(id);
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -166,6 +167,9 @@ function renderReadiness() {
     ['Highest Sun over horizon', `${m.maxSun.toFixed(2)}°`, '', `Horizon: ${S.H.terrain ? 'NASA LOLA terrain' : 'smooth Moon'}`,
       'The highest the Sun gets above the local mountain horizon during the mission, in degrees. At the pole the Sun stays very low.'],
   ].map(([k, val, cl, n, tip]) => `<div class="stat" title="${esc(tip)}"><span class="k">${k}</span><span class="v ${cl}">${val}</span><span class="n">${n}</span></div>`).join('');
+  const nasa = NASA_ILLUM[S.site.id];
+  $('nasaNote').hidden = !nasa;
+  if (nasa) $('nasaNote').textContent = `NASA LOLA 18.6-year average here: ☀️ ${Math.round(nasa.sun)}% sunlight · 🌍 ${Math.round(nasa.earth)}% Earth visibility (long-term reference; the numbers above are for your mission dates).`;
 }
 
 // ---------- timeline strips ----------

@@ -200,3 +200,5 @@ table.res td { vertical-align:top }
 .tag-core { background:color-mix(in srgb, var(--good) 18%, transparent); border-color:color-mix(in srgb, var(--good) 50%, var(--line)) }
 .tag-validation { background:color-mix(in srgb, var(--earth) 18%, transparent); border-color:color-mix(in srgb, var(--earth) 50%, var(--line)) }
 .tag-checking { background:color-mix(in srgb, var(--sun) 16%, transparent); border-color:color-mix(in srgb, var(--sun) 50%, var(--line)) }
+
+.nasa-note { margin:8px 0 0; font-size:12.5px }

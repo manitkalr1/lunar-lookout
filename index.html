@@ -219,14 +219,18 @@
       </div>
     </section>
 
-    <section class="panel" aria-label="Load terrain">
+    <section class="panel terrain-panel" aria-label="Terrain data">
       <div class="panel-head"><h2>Terrain data</h2></div>
       <div class="drop" id="drop">
-        <div id="demStatus">Loading NASA LOLA terrain…</div>
-        <p style="margin:0">The app loads NASA's LOLA 240 m south-pole elevation model automatically. For sharper detail within 5° of the pole, download <span class="mono">LDEM_85S_40M.IMG</span> (115 MB) from the <a href="https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/" target="_blank" rel="noopener">LOLA polar GDR archive</a> and drop it here. It stays in your browser.</p>
-        <label class="field" for="demFile">Load a LOLA polar elevation file (.IMG)
-          <input type="file" id="demFile" accept=".img,.IMG"></label>
+        <div id="demStatus" role="status">Loading NASA LOLA terrain…</div>
         <progress id="demProg" max="1" value="0" hidden></progress>
+        <details class="sharper" id="sharper">
+          <summary>Use a sharper map</summary>
+          <p id="demDetail" class="sub" style="margin:6px 0 0"></p>
+          <p style="margin:6px 0 0">For more detail within 5° of the pole, download <span class="mono">LDEM_85S_40M.IMG</span> (115 MB) from the <a href="https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/" target="_blank" rel="noopener">LOLA polar GDR archive</a>, then choose it below or drop it here. It stays in your browser.</p>
+          <label class="field" for="demFile" style="margin-top:8px">LOLA polar elevation file (.IMG)
+            <input type="file" id="demFile" accept=".img,.IMG"></label>
+        </details>
       </div>
       <p class="explain" style="margin-top:10px">LOLA is the laser altimeter on NASA's Lunar Reconnaissance Orbiter. It measured the height of the lunar surface billions of times. From those heights we trace a line in every direction to find how high the terrain rises, which gives each site its true horizon.</p>
     </section>

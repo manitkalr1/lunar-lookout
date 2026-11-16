@@ -12656,7 +12656,10 @@ Lowest battery ${Math.round(m.minSoc * 100)}%${m.deadH ? " (runs flat)" : ""}`;
   // js/main.js
   var $3 = (id2) => document.getElementById(id2);
   function setDemStatus(text, state, pct) {
-    $3("demStatus").textContent = text;
+    $3("demStatus").textContent = state === "ok" ? `Using NASA LOLA terrain, ${st.dem.scale} m resolution ✓` : text;
+    $3("demStatus").title = state === "ok" ? text : "";
+    $3("demDetail").textContent = state === "ok" ? text : "";
+    if (state === "off") $3("sharper").open = true;
     st.demLoading = state === "loading";
     st.demPct = state === "loading" ? pct || 0 : null;
     const chip = state === "ok" ? `Terrain: LOLA ${st.dem.scale} m` : state === "loading" ? `Terrain: loading ${Math.round(pct || 0)}%` : "Terrain: smooth Moon";

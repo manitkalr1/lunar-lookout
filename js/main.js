@@ -13,7 +13,13 @@ const $ = id => document.getElementById(id);
  * state: 'ok' (loaded), 'loading' (pct 0-100), or 'off' (no terrain).
  */
 function setDemStatus(text, state, pct) {
-  $('demStatus').textContent = text;
+  // One short line when terrain is loaded; the full message (including the
+  // Shackleton depth check) goes into the "Use a sharper map" details.
+  $('demStatus').textContent = state === 'ok' ? `Using NASA LOLA terrain, ${st.dem.scale} m resolution ✓` : text;
+  $('demStatus').title = state === 'ok' ? text : '';
+  $('demDetail').textContent = state === 'ok' ? text : '';
+  // If there is no terrain (opened from a file, or the download failed), open the picker.
+  if (state === 'off') $('sharper').open = true;
   st.demLoading = state === 'loading';
   st.demPct = state === 'loading' ? (pct || 0) : null;
   const chip = state === 'ok' ? `Terrain: LOLA ${st.dem.scale} m` : state === 'loading' ? `Terrain: loading ${Math.round(pct || 0)}%` : 'Terrain: smooth Moon';

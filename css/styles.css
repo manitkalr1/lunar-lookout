@@ -238,3 +238,8 @@ details.settings[open] > summary { margin-bottom:10px }
 
 .banner-btn { margin:6px 6px 0 0; padding:4px 10px; font-size:13px; font-weight:600; border-color:var(--warn) }
 .banner-hint { display:block; margin-top:4px; font-weight:400; font-size:12.5px; color:var(--ink-2) }
+
+/* Terrain panel: one status line, file picker tucked away */
+.terrain-panel { align-self:start }
+details.sharper > summary { cursor:pointer; font-size:13.5px; color:var(--accent); width:max-content; max-width:100% }
+details.sharper[open] > summary { margin-bottom:2px }
